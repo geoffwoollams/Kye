@@ -26,7 +26,26 @@ public class UINavigation : MonoBehaviour
             eventSystem.SetSelectedGameObject(lastSelectedElement);
 
 
-        if (GameController.Instance.GamePanel.activeSelf && !GameController.Instance.MainMenu.activeSelf)
+        if (GameController.Instance.MessageContainer.activeSelf)
+        {
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.escapeKey.wasPressedThisFrame)
+                    GameController.Instance.CloseMessage();
+            }
+
+            if (Gamepad.current != null)
+            {
+                if (Gamepad.current.selectButton.wasPressedThisFrame)
+                    GameController.Instance.CloseMessage();
+                if (Gamepad.current.startButton.wasPressedThisFrame)
+                    GameController.Instance.CloseMessage();
+                if (Gamepad.current.bButton.wasPressedThisFrame)
+                    GameController.Instance.CloseMessage();
+            }
+        }
+
+        else if (GameController.Instance.GamePanel.activeSelf && !GameController.Instance.MainMenu.activeSelf)
         {
             if (Keyboard.current != null)
             {

@@ -589,9 +589,13 @@ public class GameController : MonoBehaviour
 
     public void LoadRandomLevel()
     {
-        List<string> keyList = new List<string>(Levels.Classic.Keys);        
+        // IsLevelUnlocked returns true for every level when UnlockAllLevels is on
+        List<string> keyList = Levels.Classic.Keys.Where(Common.IsLevelUnlocked).ToList();
+        if (keyList.Count == 0)
+            keyList.Add("first");
+
         string randomKey = keyList[Common.GetRandom(0, keyList.Count)];
-        AppController.Instance.settings.LastLevelPlayed = randomKey;
+        KyeAnalytics.RandomLevel(this, randomKey);
         LoadLevelWithNoR(randomKey);
     }
 

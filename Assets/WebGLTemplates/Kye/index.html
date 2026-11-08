@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+
+    <title>{{{ PRODUCT_NAME }}} :: Play Game Online</title>
+    <link rel="shortcut icon" href="/favicon.ico">
+
+    <style>
+        body {
+            margin: 0;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        #unity-canvas {
+            width: 100vw;
+            height: 100dvh;
+            position: fixed;
+            background: #fff;
+        }
+
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: black;
+            font-family: Arial, sans-serif;
+            z-index: 10;
+        }
+
+        #spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.15);
+            border-top-color: black;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #progress-bar {
+            width: 200px;
+            height: 12px;
+            background: #333;
+            margin-top: 20px;
+            border-radius: 4px;
+            border: 1px solid #000;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #0f0;
+        }
+
+        #progress-text {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="unity-canvas"
+        width="{{{ WIDTH }}}"
+        height="{{{ HEIGHT }}}"
+        tabindex="-1">
+    </canvas>
+
+    <div id="loading-screen">
+        <img src="/logo.png" height="128" style="padding-bottom:50px;" alt="{{{ PRODUCT_NAME }}}" />
+
+        <div id="spinner"></div>
+
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+
+        <div id="progress-text">Loading 0%</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("unity-canvas");
+        const loadingScreen = document.getElementById("loading-screen");
+        const progressFill = document.getElementById("progress-fill");
+        const progressText = document.getElementById("progress-text");
+
+        const buildUrl = "Build";
+        const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+
+        const config = {
+            dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+            frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+            workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+#endif
+            codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+            memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+            symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+            productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+            productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}}
+        };
+
+        const script = document.createElement("script");
+        script.src = loaderUrl;
+
+        script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+
+                const percent = Math.round(progress * 100);
+
+                progressFill.style.width = percent + "%";
+                progressText.textContent = "Loading " + percent + "%";
+
+            }).then((unityInstance) => {
+
+                loadingScreen.style.display = "none";
+
+            }).catch((message) => {
+
+                progressText.textContent = "Failed to load " + config.productName;
+
+                console.error(message);
+
+            });
+        };
+
+        document.body.appendChild(script);
+    </script>
+
+</body>
+</html>

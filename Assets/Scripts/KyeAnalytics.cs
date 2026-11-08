@@ -39,6 +39,22 @@ public static class KyeAnalytics
         Send(runner, data);
     }
     
+    public static void RandomLevel(MonoBehaviour runner, string level)
+    {
+        if (GameController.Instance.levelEditor.IsPlaying)
+            return;
+        
+        var data = new Dictionary<string, object>
+        {
+            { "pid", AppController.Instance.settings.PlayerID },
+            { "event", "random_level" },
+            { "version", Application.version },
+            { "level", level }
+        };
+
+        Send(runner, data);
+    }
+    
     public static void LevelRestarted(MonoBehaviour runner, string level)
     {
         if (GameController.Instance.levelEditor.IsPlaying)

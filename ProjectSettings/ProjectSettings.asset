@@ -3,7 +3,8 @@
 --- !u!129 &1
 PlayerSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 30
+  m_BuildProfilePlayerSettings: {fileID: 0}
+  serializedVersion: 33
   productGUID: 07e8e691df5b67aefae7e6d9577591a4
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
@@ -47,6 +48,7 @@ PlayerSettings:
   defaultScreenHeight: 700
   defaultScreenWidthWeb: 800
   defaultScreenHeightWeb: 450
+  webProgressiveAssetLoading: 0
   m_StereoRenderingPath: 0
   m_ActiveColorSpace: 0
   unsupportedMSAAFallback: 0
@@ -75,7 +77,18 @@ PlayerSettings:
   androidRenderOutsideSafeArea: 1
   androidUseSwappy: 0
   androidRequestedVisibleInsets: 0
+  m_AndroidWindowInsets:
+    4:
+      overlapping: 0
+      appearance: 0
+    2:
+      overlapping: 0
+      appearance: 0
+    1:
+      overlapping: 0
+      appearance: 0
   androidSystemBarsBehavior: 2
+  androidSystemBarsBackground: 0
   androidDisplayOptions: 1
   androidBlitType: 0
   androidResizeableActivity: 1
@@ -151,9 +164,10 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 3.1.0013
+  bundleVersion: 3.1.0014a
   preloadedAssets:
   - {fileID: 11400000, guid: bdf2855e5dd2f8ba4a2a42d3b9bb03dd, type: 2}
+  - {fileID: 11400000, guid: 3f5b5dff67a942289a9defa416b206f3, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   xboxOneDisableKinectGpuReservation: 1
@@ -184,6 +198,7 @@ PlayerSettings:
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 26
   AndroidTargetSdkVersion: 0
+  AndroidCompileSdkVersion: 0
   AndroidPreferredInstallLocation: 1
   AndroidPreferredDataLocation: 1
   aotOptions: 
@@ -199,12 +214,10 @@ PlayerSettings:
   strictShaderVariantMatching: 0
   VertexChannelCompressionMask: 4054
   iPhoneSdkVersion: 988
-  iOSSimulatorArchitecture: 0
-  iOSTargetOSVersionString: 15.0
+  iOSTargetOSVersionString: 16.0
   tvOSSdkVersion: 0
-  tvOSSimulatorArchitecture: 0
   tvOSRequireExtendedGameController: 0
-  tvOSTargetOSVersionString: 15.0
+  tvOSTargetOSVersionString: 16.0
   VisionOSSdkVersion: 0
   VisionOSTargetOSVersionString: 1.0
   xcodeProjectType: 0
@@ -260,7 +273,6 @@ PlayerSettings:
   VisionOSManualSigningProvisioningProfileType: 0
   appleEnableAutomaticSigning: 0
   iOSRequireARKit: 0
-  iOSAutomaticallyDetectAndAddCapabilities: 1
   appleEnableProMotion: 0
   shaderPrecisionModel: 0
   clonedFromGUID: 5f34be1353de5cf4398729fda238591b
@@ -274,7 +286,7 @@ PlayerSettings:
   useCustomGradlePropertiesTemplate: 0
   useCustomGradleSettingsTemplate: 0
   useCustomProguardFile: 0
-  AndroidTargetArchitectures: 1
+  AndroidTargetArchitectures: 2
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: 
@@ -287,10 +299,10 @@ PlayerSettings:
   androidAppCategory: 3
   useAndroidAppCategory: 1
   androidAppCategoryOther: 
-  AndroidEnableTango: 0
   androidEnableBanner: 1
   androidUseLowAccuracyLocation: 0
   androidUseCustomKeystore: 0
+  androidRenderServiceUseVirtualDisplay: 0
   m_AndroidBanners:
   - width: 320
     height: 180
@@ -302,6 +314,12 @@ PlayerSettings:
   AndroidAppBundleSizeToValidate: 150
   AndroidReportGooglePlayAppDependencies: 1
   androidSymbolsSizeThreshold: 800
+  androidIconSourceType: 0
+  androidAdaptiveIconVectorDrawableBackground: {fileID: 0}
+  androidAdaptiveIconVectorDrawableForeground: {fileID: 0}
+  androidAdaptiveIconVectorDrawableMonochrome: {fileID: 0}
+  androidAdaptiveBannerVectorDrawableBackground: {fileID: 0}
+  androidAdaptiveBannerVectorDrawableForeground: {fileID: 0}
   m_BuildTargetIcons:
   - m_BuildTarget: 
     m_Icons:
@@ -345,6 +363,31 @@ PlayerSettings:
       m_Height: 81
       m_Kind: 2
       m_SubKind: 
+    - m_Textures: []
+      m_Width: 640
+      m_Height: 360
+      m_Kind: 3
+      m_SubKind: 
+    - m_Textures: []
+      m_Width: 480
+      m_Height: 270
+      m_Kind: 3
+      m_SubKind: 
+    - m_Textures: []
+      m_Width: 320
+      m_Height: 180
+      m_Kind: 3
+      m_SubKind: 
+    - m_Textures: []
+      m_Width: 240
+      m_Height: 135
+      m_Kind: 3
+      m_SubKind: 
+    - m_Textures: []
+      m_Width: 160
+      m_Height: 90
+      m_Kind: 3
+      m_SubKind: 
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
     m_StaticBatching: 1
@@ -355,6 +398,7 @@ PlayerSettings:
   - m_BuildTarget: WebGL
     m_StaticBatching: 1
     m_DynamicBatching: 0
+  m_UseLegacyStaticBatchingDefault: 1
   m_BuildTargetShaderSettings: []
   m_BuildTargetGraphicsJobs:
   - m_BuildTarget: MacStandaloneSupport
@@ -391,9 +435,11 @@ PlayerSettings:
   m_BuildTargetGraphicsAPIs:
   - m_BuildTarget: AndroidPlayer
     m_APIs: 150000000b000000i
+    m_UGKFlags: 0000000000000000i
     m_Automatic: 1
   - m_BuildTarget: iOSSupport
     m_APIs: 10000000i
+    m_UGKFlags: 00000000i
     m_Automatic: 1
   m_DefaultShaderChunkSizeInMB: 16
   m_DefaultShaderChunkCount: 0
@@ -578,6 +624,10 @@ PlayerSettings:
   switchUpgradedPlayerSettingsToNMETA: 0
   switchCaStoreSource: 0
   switchCaStoreFilePath: 
+  switchStorageMode: 0
+  switchStorageMounts: []
+  switchPersistentDataPathMountName: 
+  switchTemporaryCachePathMountName: 
   ps4NPAgeRating: 12
   ps4NPTitleSecret: 
   ps4NPTrophyPackPath: 
@@ -660,16 +710,16 @@ PlayerSettings:
   spritePackerPolicy: 
   webGLMemorySize: 16
   webGLExceptionSupport: 1
-  webGLNameFilesAsHashes: 0
+  webGLNameFilesAsHashes: 1
   webGLShowDiagnostics: 0
   webGLDataCaching: 1
   webGLDebugSymbols: 0
   webGLEmscriptenArgs: 
   webGLModulesDirectory: 
-  webGLTemplate: APPLICATION:Minimal
-  webGLAnalyzeBuildSize: 0
+  webGLTemplate: PROJECT:Kye
+  webGLAnalyzeBuildSize: 1
   webGLUseEmbeddedResources: 0
-  webGLCompressionFormat: 2
+  webGLCompressionFormat: 0
   webGLWasmArithmeticExceptions: 0
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
@@ -680,35 +730,18 @@ PlayerSettings:
   webGLMemoryLinearGrowthStep: 16
   webGLMemoryGeometricGrowthStep: 0.2
   webGLMemoryGeometricGrowthCap: 96
-  webGLPowerPreference: 2
+  webGLPowerPreference: 1
   webGLWebAssemblyTable: 0
   webGLWebAssemblyBigInt: 0
   webGLCloseOnQuit: 0
-  webWasm2023: 0
+  webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 0
-  webProgressiveAssetLoading: 0
-  scriptingDefineSymbols:
-    Android: UNITY_POST_PROCESSING_STACK_V2
-    EmbeddedLinux: UNITY_POST_PROCESSING_STACK_V2
-    GameCoreScarlett: UNITY_POST_PROCESSING_STACK_V2
-    GameCoreXboxOne: UNITY_POST_PROCESSING_STACK_V2
-    Kepler: UNITY_POST_PROCESSING_STACK_V2
-    LinuxHeadlessSimulation: UNITY_POST_PROCESSING_STACK_V2
-    Nintendo Switch: UNITY_POST_PROCESSING_STACK_V2
-    Nintendo Switch 2: UNITY_POST_PROCESSING_STACK_V2
-    PS4: UNITY_POST_PROCESSING_STACK_V2
-    PS5: UNITY_POST_PROCESSING_STACK_V2
-    QNX: UNITY_POST_PROCESSING_STACK_V2
-    Standalone: UNITY_POST_PROCESSING_STACK_V2
-    VisionOS: UNITY_POST_PROCESSING_STACK_V2
-    WebGL: UNITY_POST_PROCESSING_STACK_V2
-    XboxOne: UNITY_POST_PROCESSING_STACK_V2
-    tvOS: UNITY_POST_PROCESSING_STACK_V2
+  scriptingDefineSymbols: {}
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
-    Android: 0
-    Standalone: 0
+    Android: 1
+    Standalone: 1
   il2cppCompilerConfiguration:
     Standalone: 2
   il2cppCodeGeneration:
@@ -716,22 +749,22 @@ PlayerSettings:
   il2cppLTOMode: {}
   il2cppStacktraceInformation: {}
   managedStrippingLevel:
-    Android: 1
-    EmbeddedLinux: 1
-    GameCoreScarlett: 1
-    GameCoreXboxOne: 1
-    Nintendo Switch: 1
-    PS4: 1
-    PS5: 1
-    QNX: 1
-    ReservedCFE: 1
+    Android: 4
+    EmbeddedLinux: 4
+    GameCoreScarlett: 4
+    GameCoreXboxOne: 4
+    Nintendo Switch: 4
+    PS4: 4
+    PS5: 4
+    QNX: 4
+    ReservedCFE: 4
     Standalone: 3
-    VisionOS: 1
-    WebGL: 1
-    Windows Store Apps: 1
-    XboxOne: 1
-    iPhone: 1
-    tvOS: 1
+    VisionOS: 4
+    WebGL: 4
+    Windows Store Apps: 4
+    XboxOne: 4
+    iPhone: 4
+    tvOS: 4
   incrementalIl2cppBuild: {}
   suppressCommonWarnings: 1
   allowUnsafeCode: 0
@@ -745,6 +778,7 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
+  windowsCopyVCRuntime: 1
   metroPackageName: Template_2D
   metroPackageVersion: 
   metroCertificatePath: 
@@ -838,6 +872,7 @@ PlayerSettings:
   androidVulkanDenyFilterList: []
   androidVulkanAllowFilterList: []
   androidVulkanDeviceFilterListAsset: {fileID: 0}
+  d3d12CollectStateObjectDatabase: 0
   d3d12DeviceFilterListAsset: {fileID: 0}
   webGPUDeviceFilterListAsset: {fileID: 0}
   allowedHttpConnections: 3
