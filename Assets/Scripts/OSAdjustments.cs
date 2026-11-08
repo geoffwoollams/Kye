@@ -5,6 +5,7 @@ public class OSAdjustments : MonoBehaviour
 {
     public GameObject ExitButton, HelpButton, SettingsButton;
     public Button LevelsButton;
+    public GameObject[] HideOnWebGL;
     
     void Start()
     {
@@ -21,6 +22,12 @@ public class OSAdjustments : MonoBehaviour
         Navigation levelsNav = LevelsButton.navigation;
         levelsNav.selectOnDown = SettingsButton.GetComponent<Button>();
         LevelsButton.navigation = levelsNav;
+#endif
+
+#if UNITY_WEBGL
+        // Browsers have no file dialog, so hide the open and save buttons.
+        foreach (var button in HideOnWebGL)
+            if (button != null) button.SetActive(false);
 #endif
     }
 }

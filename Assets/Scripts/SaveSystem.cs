@@ -9,6 +9,7 @@ public static class SaveSystem
     // is safer to read lazily than during static initialisation.
     private static string PathV1 => Path.Combine(Application.persistentDataPath, "settings.v1.dat");
     private static string PathV2 => Path.Combine(Application.persistentDataPath, "settings.v2.dat");
+    private static string _lastSavedJson;
     private static string PathV3 => Path.Combine(Application.persistentDataPath, "settings.v3.json");
 
     // ---------------------------------------------------------------
@@ -22,12 +23,17 @@ public static class SaveSystem
         {
             string json = JsonUtility.ToJson(settings, true);
 
+            // Nothing changed since the last write, so skip the disk write.
+            if (json == _lastSavedJson && File.Exists(PathV3))
+                return true;
+
             // Write to a temp file first so a crash mid-write can't corrupt the real save.
             string tempPath = PathV3 + ".tmp";
             File.WriteAllText(tempPath, json);
 
             if (File.Exists(PathV3)) File.Delete(PathV3);
             File.Move(tempPath, PathV3);
+            _lastSavedJson = json;
             return true;
         }
         catch (Exception ex)

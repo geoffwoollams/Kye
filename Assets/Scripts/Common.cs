@@ -418,6 +418,25 @@ public class Common : MonoBehaviour
         return false;
     }
 
+    public static string GetDefaultFilePath()
+    {
+#if UNITY_ANDROID || UNITY_IOS || UNITY_WEBGL
+        return Application.persistentDataPath;
+#else
+        string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        if (!string.IsNullOrEmpty(docs) && !docs.EndsWith("Documents"))
+        {
+            string sub = System.IO.Path.Combine(docs, "Documents");
+            if (System.IO.Directory.Exists(sub))
+                docs = sub;
+        }
+
+        if (string.IsNullOrEmpty(docs) || !System.IO.Directory.Exists(docs))
+            docs = Application.persistentDataPath;
+        return docs;
+#endif
+    }
+
     public static Color ChangeAlpha(Color color, float alpha)
     {
         color.a = alpha;

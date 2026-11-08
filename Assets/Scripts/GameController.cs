@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -19,13 +18,12 @@ public class GameController : MonoBehaviour
     [HideInInspector]
     public Item Kye;
 
-    public Transform CameraTransform;
     public Camera actualCamera;
 
     public Canvas MainCanvas;
 
     public GameObject GamePanel, MainMenu, PauseMenu, EditorPanel, LevelPickerPanel, LevelFailed, LevelComplete;
-    public GameObject PlayButton, LoadLevelButton, ResumeButton, LevelFailedButton, LevelCompleteButton, EditorMenuButton, LevelsScreenPrimaryButton, LevelsScreenOpenButton;
+    public GameObject PlayButton, ResumeButton, LevelFailedButton, LevelCompleteButton, EditorMenuButton, LevelsScreenPrimaryButton, LevelsScreenOpenButton;
     public TMPro.TMP_InputField LoadLevelInput;
     public GameObject LevelPickerItem, LevelPickerContainer;
     public GameObject LevelPickerContainerContainer;
@@ -57,7 +55,6 @@ public class GameController : MonoBehaviour
     public GameObject ItemTimer3, ItemTimer4, ItemTimer5, ItemTimer6, ItemTimer7, ItemTimer8, ItemTimer9;
     public GameObject ItemSploder, SplodeEffect, ItemTracker, ItemGuard;
     public GameObject KyeGhost;
-    public GameObject TouchControls;
 
     private bool _autoFollowMouse;
     private float _lastAutoMove;
@@ -66,7 +63,7 @@ public class GameController : MonoBehaviour
     public Item[,] Items = new Item[30, 20];
 
     private Vector2 _input;
-    public Vector2Int _inputClickPosition, _lastInputClickPosition;
+    public Vector2Int _inputClickPosition;
     private int _startLives = 3;
     private int _lives;
     private int _diamonds;
@@ -75,16 +72,15 @@ public class GameController : MonoBehaviour
     private float _movementDelay = 0.05f;
     public bool _canStartMoving;
     private int _itemCount;
+    private bool _levelHasDiamonds;
+    private readonly List<Item> _thinkers = new List<Item>(256);
 
     public int CurrentLevelID = 0;
-    public string CurrentLevelKey = "";
     public string CurrentLevelName = "";
-    public string CurrentLevelNameR = "";
     public string CurrentLevelNotes = "";
     public string CurrentLevelFinishMessage = "";
 
     private float _timeSinceLevelLoaded;
-    private float _lastTimeUpdate;
     
     private string _currentKyeLevelName = "";
     private string _editorPlaytestLevel = "";
@@ -130,7 +126,6 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
-        LoadLocalFiles();
         LoadLevelPicker();
         ShowMainMenu();
         
@@ -183,11 +178,24 @@ public class GameController : MonoBehaviour
         MessageContainer.SetActive(true);
     }
 
-    private void LoadLocalFiles() {
-        //Levels.Classic.Add("test33333333","RklSU1QKSnVzdCBmb3IgcHJhY3RpY2UNClRoZSBmaXJzdCBsZXZlbCB3YXMgZm9yIHByYWN0aWNlLg0KNTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1DQo1VCAgIGUgICAgICAgSyogIGEgICAgZCBlICAgRTUNCjUgICAgYiA0NTU1NTYgICAgICAgIGEgIGIgICAgNQ0KNSAgICBiIGR2dnZ2ZCAgICAgICAgICAgYiAgICA1DQo1ICAgIGIgZHZ2dnZkICAgICAgICAgIGFiICAgIDUNCjVlYmJiZSBlZUJCZWUgICAgICAgYyAgIGViYmJlNQ0KNSAgICAgICAgICAgICAgIGEgICAgICAgICAgICA1DQo1IDhycmUgICAgICAgICAgICAgICAgYSBlbGw4IDUNCjUgNT4+ZSAgICAgIHMgIFMgICAgICAgIGU8PDUgNQ0KNSA1Pj5CICAgICAgICAgICAgICAgICAgQjw8NSA1DQo1IDU+PkIgICAgICAgICAgICAgICBiICBCPDw1IDUNCjUgNT4+ZSAgICAgIFMgIHMgICAgIFUgIGU8PDUgNQ0KNSAycnJlICAgICAgICAgICAgICAgYiAgZWxsMiA1DQo1ICAgICAgICAgICAgICAgICBiUmJiICAgICAgIDUNCjVlYmJiZSBlZWVlZWUgIDc1NTU1NTkgIGViYmJlNQ0KNSAgICBiIHVeXl5edSAgNSAgICAgNSAgYiAgICA1DQo1ICAgIGIgdV5eXl51ICA1ICAgICA1ICBiICAgIDUNCjUgICAgYiA0NTU1NTYgIDUgICAgIDUgIGIgICAgNQ0KNUMgICBlICAgICAgICAgZSAgWyAgZSAgZSAgIH41DQo1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTUNCg==");
+    private static readonly Dictionary<string, string[]> LevelHeaderCache = new Dictionary<string, string[]>();
+
+    private static string[] GetLevelHeader(string b64)
+    {
+        if (!LevelHeaderCache.TryGetValue(b64, out var header))
+        {
+            string[] lines = Common.Base64Decode(b64).Split(
+                new[] { "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
+            header = new[] { lines[0].Trim(), lines[1].Trim() };
+            LevelHeaderCache[b64] = header;
+        }
+
+        return header;
     }
 
-    private void LevelPickerItemInit(ref GameObject levelItem, string levelB64, int x, int y, int ln, bool unlocked)
+    private void LevelPickerItemInit(GameObject levelItem, string levelB64, int y, int ln, bool unlocked)
     {
         var LevelName = levelItem.transform.Find("LevelName").GetComponent<TMPro.TMP_Text>();
         var LevelNotes = levelItem.transform.Find("LevelNotes").GetComponent<TMPro.TMP_Text>();
@@ -198,33 +206,21 @@ public class GameController : MonoBehaviour
         LevelNumber.text = ln.ToString();
 
         var levelItemRect = levelItem.GetComponent<RectTransform>();
-        //Common.SetLeft(ref levelItemRect, 20);
-        //Common.SetRight(ref levelItemRect, 20);
-
-
         var levelItemRectPosition = levelItemRect.anchoredPosition;
-        //levelItemRectPosition.x = x;
         levelItemRectPosition.y = y;
         levelItemRect.anchoredPosition = levelItemRectPosition;
 
-        var level = Common.Base64Decode(levelB64);
-
-        string[] lines = level.Split(
-            new[] { "\r\n", "\r", "\n" },
-            StringSplitOptions.None
-        );
-
-        LevelName.text = lines[0].Trim();
-        LevelNotes.text = lines[1].Trim();
+        var header = GetLevelHeader(levelB64);
+        LevelName.text = header[0];
+        LevelNotes.text = header[1];
 
         levelItem.name = "LevelItem " + LevelName.text;
-        
+
         LevelItem lItem = levelItem.GetComponent<LevelItem>();
 
         float? bestTime = AppController.Instance.settings.GetBestTime(LevelName.text.ToLower());
         if (bestTime != null && bestTime > 0)
         {
-            Debug.Log("bestTime: " + bestTime);
             lItem.bestTimeText.gameObject.SetActive(true);
             lItem.bestTimeText.text = Common.FormatTime(bestTime);
         }
@@ -246,15 +242,9 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public string GetLevelName(string b64) {
-        var level = Common.Base64Decode(b64);
-
-        string[] lines = level.Split(
-            new[] { "\r\n", "\r", "\n" },
-            StringSplitOptions.None
-        );
-
-        return lines[0].Trim();
+    public string GetLevelName(string b64)
+    {
+        return GetLevelHeader(b64)[0];
     }
 
     public void ClearLevelList()
@@ -292,19 +282,16 @@ public class GameController : MonoBehaviour
         }
 
         int y = -5;
-        int x = 0;
 
-        //var levels = Common.ShuffledLevels();
-        //var levels = Levels.Classic.Values;
-
-        GameObject levelItem, prevItem = null;
-        Selectable selectOnUp = LevelsScreenPrimaryButton.GetComponent<Button>();
+        GameObject prevItem = null;
+        Button prevItemButton = null, prevEditButton = null;
+        var primaryButton = LevelsScreenPrimaryButton.GetComponent<Button>();
+        Selectable selectOnUp = primaryButton;
 
         bool doneFirst = false;
 
         int ln = 1;
 
-        //foreach (var levelB64 in levels.Values)
         foreach (KeyValuePair<string, string> entry in levels)
         {
             string levelKey = entry.Key;
@@ -316,11 +303,11 @@ public class GameController : MonoBehaviour
             
             if (filter == "" || GetLevelName(levelB64).ToLower().Contains(filter))
             {
-                levelItem = Instantiate(LevelPickerItem);
+                var levelItem = Instantiate(LevelPickerItem);
                 levelItem.transform.SetParent(LevelPickerContainer.transform, false);
                 var lItem = levelItem.GetComponent<LevelItem>();
                 lItem.b64 = levelB64;
-                LevelPickerItemInit(ref levelItem, levelB64, x, y, ln, isUnlocked);
+                LevelPickerItemInit(levelItem, levelB64, y, ln, isUnlocked);
                 y -= 55;
 
                 ln++;
@@ -332,9 +319,9 @@ public class GameController : MonoBehaviour
                 editNav.mode = Navigation.Mode.Explicit;
                 
                 if(prevItem)
-                    editNav.selectOnUp = prevItem.transform.Find("Edit").GetComponent<Button>();
+                    editNav.selectOnUp = prevEditButton;
                 else
-                    editNav.selectOnUp = LevelsScreenPrimaryButton.GetComponent<Button>();
+                    editNav.selectOnUp = primaryButton;
                 
                 editNav.selectOnLeft = itemButton;
                 editButton.navigation = editNav;
@@ -352,10 +339,9 @@ public class GameController : MonoBehaviour
 
                 if (!doneFirst)
                 {
-                    var buttonMenu = LevelsScreenPrimaryButton.GetComponent<Button>();
-                    var nav = buttonMenu.navigation;
+                    var nav = primaryButton.navigation;
                     nav.selectOnDown = itemButton;
-                    buttonMenu.navigation = nav;
+                    primaryButton.navigation = nav;
 
                     var buttonOpen = LevelsScreenOpenButton.GetComponent<Button>();
                     nav = buttonOpen.navigation;
@@ -372,25 +358,22 @@ public class GameController : MonoBehaviour
 
                 if (prevItem)
                 {
-                    var prevEditButton = prevItem.transform.Find("Edit").GetComponent<Button>();
                     Navigation prevEditNav = prevEditButton.navigation;
                     prevEditNav.selectOnDown = editButton;
                     prevEditButton.navigation = prevEditNav;
                     
-                    var prevButton = prevItem.GetComponent<Button>();
-                    Navigation prevNav = prevButton.navigation;
-                    
+                    Navigation prevNav = prevItemButton.navigation;
                     prevNav.mode = Navigation.Mode.Explicit;
-                    prevNav.selectOnDown = levelItem.GetComponent<Button>();
-                    prevButton.navigation = prevNav;
+                    prevNav.selectOnDown = itemButton;
+                    prevItemButton.navigation = prevNav;
                 }
 
                 prevItem = levelItem;
+                prevItemButton = itemButton;
+                prevEditButton = editButton;
                 selectOnUp = itemButton;
             }
         }
-
-        //y -= 5;
 
         var container = LevelPickerContainer.GetComponent<RectTransform>();
 
@@ -435,9 +418,9 @@ public class GameController : MonoBehaviour
     
     public void SaveSettings()
     {
-        AppController.Instance.settings.UnlimitedLives = GameController.Instance.tUnlimitedLives.isOn;
-        AppController.Instance.settings.UnlockAllLevels = GameController.Instance.tUnlockAllLevels.isOn;
-        AppController.Instance.settings.GodMode = GameController.Instance.tGodMode.isOn;
+        AppController.Instance.settings.UnlimitedLives = tUnlimitedLives.isOn;
+        AppController.Instance.settings.UnlockAllLevels = tUnlockAllLevels.isOn;
+        AppController.Instance.settings.GodMode = tGodMode.isOn;
         AppController.Instance.Save();
     }
 
@@ -488,10 +471,6 @@ public class GameController : MonoBehaviour
     {
         if (SettingsPanel.activeSelf)
         {
-            AppController.Instance.settings.UnlimitedLives = GameController.Instance.tUnlimitedLives.isOn;
-            AppController.Instance.settings.UnlockAllLevels = GameController.Instance.tUnlockAllLevels.isOn;
-            AppController.Instance.settings.GodMode = GameController.Instance.tGodMode.isOn;
-            
             SaveSettings();
             
             SettingsPanel.SetActive(!SettingsPanel.activeSelf);
@@ -548,9 +527,8 @@ public class GameController : MonoBehaviour
         FrameUI.SetActive(false);
 
         ClearLevelList();
-        LoadLevelInput.text = "";  //AppController.Instance.settings.LastLevelPlayed;
+        LoadLevelInput.text = "";
         LevelPickerContainerContainer.SetActive(true);
-        //LevelPickerContainer.GetComponent<ScrollRect>().SetY(0);
         LevelPickerPanel.SetActive(true);
 
         EventSystem.current.SetSelectedGameObject(LevelsScreenPrimaryButton);
@@ -583,13 +561,12 @@ public class GameController : MonoBehaviour
     public void LoadMenuLevel()
     {
         KyeAnalytics.enabled = false;
-        LoadLevelWithNoR(AppController.Instance.settings.UnlockedLevel);
+        LoadLevelWithNoR(AppController.Instance.settings.LastLevelPlayed);
         KyeAnalytics.enabled = true;
     }
 
     public void LoadRandomLevel()
     {
-        // IsLevelUnlocked returns true for every level when UnlockAllLevels is on
         List<string> keyList = Levels.Classic.Keys.Where(Common.IsLevelUnlocked).ToList();
         if (keyList.Count == 0)
             keyList.Add("first");
@@ -620,16 +597,10 @@ public class GameController : MonoBehaviour
         FileBrowser.SetFilters( true, new FileBrowser.Filter( "Kye Levels", ".kye" ) );
         FileBrowser.SetDefaultFilter( ".kye" );
         
-        string openPath = Application.dataPath;
-        
-#if UNITY_STANDALONE_WIN
-        openPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-#endif
-
         FileBrowser.ShowLoadDialog(
             FileBrowserOnSuccess,
             FileBrowserOnCancel,
-            FileBrowser.PickMode.Files, false, openPath
+            FileBrowser.PickMode.Files, false, Common.GetDefaultFilePath()
         );
     }
 
@@ -642,7 +613,6 @@ public class GameController : MonoBehaviour
     
     public void FileBrowserOnCancel()
     {
-        // nothing?
     }
 
     public void LoadLevelWithKyeFile(string file)
@@ -657,7 +627,6 @@ public class GameController : MonoBehaviour
             if (levelCount <= 1)
             {
                 var levelLines = string.Join("\n", level);
-                //levelLines.TrimStart('\n', ' ');
                 LoadLevelWithString(levelLines);
             }
             else
@@ -701,7 +670,7 @@ public class GameController : MonoBehaviour
         return LoadKyeFile;
     }
 
-    public void LoadLevelWithNoR(string levelName, bool setInputOnFail = false)
+    public void LoadLevelWithNoR(string levelName)
     {
         HideMainMenu();
 
@@ -825,13 +794,13 @@ public class GameController : MonoBehaviour
     {
         var attempt = LoadLevelInput.text.ToLower();
         
-        if(!Levels.Classic.ContainsKey(attempt.ToLower()))
+        if(!Levels.Classic.ContainsKey(attempt))
         {
             LoadLevelInput.text = "";
             return;
         }
 
-        LoadLevelWithNoR(attempt, true);
+        LoadLevelWithNoR(attempt);
     }
 
     public void LoadLevel(int levelID)
@@ -888,9 +857,6 @@ public class GameController : MonoBehaviour
             StringSplitOptions.None
         );
 
-        //CurrentLevelKey = Common.LevelNameToKey(lines[0]);
-
-        //CurrentLevelID = LevelNameToID(lines[0]);
         CurrentLevelName = lines[0].Trim();
         CurrentLevelNotes = lines[1].Trim();
         CurrentLevelFinishMessage = lines[2].Trim();
@@ -950,6 +916,7 @@ public class GameController : MonoBehaviour
         _timeSinceLevelLoaded = 0;
         GamePanel.SetActive(true);
         ResetLevel();
+        _levelHasDiamonds = _diamonds > 0;
         UpdateUI();
         
         UpdatePauseLevelNavigationButtons();
@@ -1009,14 +976,12 @@ public class GameController : MonoBehaviour
 
             if (levelEditor.IsPlaying && !string.IsNullOrEmpty(_editorPlaytestLevel))
             {
-                // Is level editor
                 LoadLevelWithString(_editorPlaytestLevel);
                 return;
             }
 
             if (_currentLevelFilePath != "")
             {
-                // Is .kye file
                 string kyeFilePath = _currentLevelFilePath;
                 LoadLevel(_currentLevelB64);
                 _currentLevelFilePath = kyeFilePath;
@@ -1050,7 +1015,7 @@ public class GameController : MonoBehaviour
     {
         var spawnPos = FindRespawnSpot(new Vector2(StartPoint.x, StartPoint.y));
 
-        if (spawnPos == Vector2.negativeInfinity)
+        if (float.IsInfinity(spawnPos.x))
         {
             RestartLevel();
             return;
@@ -1075,7 +1040,6 @@ public class GameController : MonoBehaviour
         
         for (int r = 0; r < 40; r++)
         {
-            // Number of tries grows with the radius
             int tries = 4 * r + 1;
 
             for (int t = 0; t < tries; t++)
@@ -1089,7 +1053,6 @@ public class GameController : MonoBehaviour
                 }
                 else
                 {
-                    // Random.Next's upper bound is exclusive, so +1 to include r
                     x = spawnPos.x + random.Next(-r, r + 1);
                     y = spawnPos.y + random.Next(-r, r + 1);
                 }
@@ -1142,19 +1105,19 @@ public class GameController : MonoBehaviour
             if(direction.x != 0)
                 direction.x = direction.x > 0 ? 1 : -1;
 
-            GameController.Instance.inputManager.SetXY(direction);
+            inputManager.SetXY(direction);
             _lastAutoMove = Time.time;
         }
     }
 
     private void ProcessInput()
     {
-        if (Mouse.current != null && !MainMenu.activeInHierarchy)
+        var mouse = Mouse.current;
+        if (mouse != null)
         {
-            _lastInputClickPosition = _inputClickPosition;
             _inputClickPosition = Vector2Int.down;
 
-            if (Mouse.current.rightButton.wasPressedThisFrame)
+            if (mouse.rightButton.wasPressedThisFrame)
             {
                 _autoFollowMouse = !_autoFollowMouse;
 
@@ -1162,9 +1125,9 @@ public class GameController : MonoBehaviour
                     Destroy(_autoFollowGhost);
             }
 
-            if (Mouse.current.leftButton.wasPressedThisFrame || _autoFollowMouse)
+            if (mouse.leftButton.wasPressedThisFrame || _autoFollowMouse)
             {
-                var clickPosition = actualCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+                var clickPosition = actualCamera.ScreenToWorldPoint(mouse.position.ReadValue());
                 _inputClickPosition.x = Mathf.RoundToInt(clickPosition.x);
                 _inputClickPosition.y = Mathf.RoundToInt(clickPosition.y);
             }
@@ -1182,9 +1145,6 @@ public class GameController : MonoBehaviour
 
         if(inputManager.AnyKeyDown && !LevelFailed.activeSelf && !LevelComplete.activeSelf && !PauseMenu.activeSelf)
             _canStartMoving = true;
-        
-        //if(inputManager.AnyKeyChange)
-        //    _nextMoveTime = 0;
 
         // Set input to 0 if blocked to allow the other direction to move
         if(moveX != 0f && !Common.CanOccupyBy(moveX, 0, Kye))
@@ -1220,30 +1180,23 @@ public class GameController : MonoBehaviour
         TickKye();
         Tick();
 
-        if(_diamonds == 0 && _canStartMoving)
+        // Levels that start with no diamonds never finish.
+        if(_levelHasDiamonds && _diamonds == 0 && _canStartMoving)
             FinishLevel();
     }
 
     private void CheckInputForGameStuff()
     {
-        float scrollY = GameController.Instance._input.y;
+        if(!LevelPickerPanel.activeSelf)
+            return;
 
-        if(Mouse.current != null)
-        {
-            var mouseScrollY = Mouse.current.scroll.ReadValue().y;
-            if(mouseScrollY != 0)
-                scrollY = mouseScrollY;
-        }
+        var mouse = Mouse.current;
+        if(mouse == null)
+            return;
 
+        float scrollY = mouse.scroll.ReadValue().y;
         if(scrollY != 0)
-        {
-            scrollY *= -0.01f;
-
-            if (LevelPickerPanel.activeSelf)
-            {
-                LevelPickerScrollRect.Scroll(scrollY);
-            }
-        }
+            LevelPickerScrollRect.Scroll(scrollY * -0.01f);
     }
 
     private bool CheckKyeForBeasts()
@@ -1320,17 +1273,29 @@ public class GameController : MonoBehaviour
     {
         if(!_canStartMoving)
             return;
-        
-        var Thinkers = ItemContainer.GetComponentsInChildren<Item>();
 
-        for(int thinker = 0; thinker <= _itemCount; thinker++)
+        // Items think in Thinker order, and in scene order within the same Thinker. Changing this changes how levels play.
+        ItemContainer.GetComponentsInChildren(_thinkers);
+
+        // Stable insertion sort; the list is almost sorted already.
+        for(int i = 1; i < _thinkers.Count; i++)
         {
-            foreach (Item item in Thinkers)
+            var current = _thinkers[i];
+            int thinker = current.Thinker;
+            int j = i - 1;
+            while(j >= 0 && _thinkers[j].Thinker > thinker)
             {
-                if(item == null) continue;                
-                if(item.Thinker != thinker) continue;
-                item.Tick();
+                _thinkers[j + 1] = _thinkers[j];
+                j--;
             }
+            _thinkers[j + 1] = current;
+        }
+
+        for(int i = 0; i < _thinkers.Count; i++)
+        {
+            var item = _thinkers[i];
+            if(item == null) continue;
+            item.Tick();
         }
     }
 
@@ -1345,16 +1310,10 @@ public class GameController : MonoBehaviour
         {
             Common.UpdateUnlockedLevel(CurrentLevelName);
 
-            bool _isNewRecord = false;
             string key = CurrentLevelName.Trim().ToLower();
             var s = AppController.Instance.settings;
             if (Levels.Classic.ContainsKey(key) && !s.GodMode && !s.UnlimitedLives)
-                _isNewRecord = s.SubmitLevelTime(key, _timeSinceLevelLoaded);
-
-            if (_isNewRecord)
-            {
-                // todo: let player know they have a new record
-            }
+                s.SubmitLevelTime(key, _timeSinceLevelLoaded);
         }
 
         AppController.Instance.Save();
@@ -1380,7 +1339,7 @@ public class GameController : MonoBehaviour
             AudioManager.Instance.PlayDiamondPickup();
             _diamonds--;
             Common.DestroyItem(item, false);
-            UpdateUI();
+            UpdateDiamondsUI();
             return;
         }
 
@@ -1464,55 +1423,41 @@ public class GameController : MonoBehaviour
             var ghostPosition = new Vector3(Kye.x, Kye.y, 0);
             var kyeGhost = Instantiate(KyeGhost, ghostPosition, KyeGhost.transform.rotation);
 
-            UpdateUI();
+            UpdateDiamondsUI();
+            UpdateLivesUI();
 
-            //if(Common.IsEmpty(StartPoint.x, StartPoint.y) || Common.GetItem(StartPoint.x, StartPoint.y).IsKye)
-            //{
-                ResetLevel();
-            //}
-            //else
-            //{
-            //    Debug.Log("handle this killplayer() respawn not empty");
-            //    RestartLevel();
-            //}
+            ResetLevel();
         }
         else
         {
-            UpdateUI();
+            UpdateDiamondsUI();
+            UpdateLivesUI();
             Kill(message);
         }
     }
 
     private void UpdateUI()
     {
-        Diamonds.text = _diamonds.ToString();
+        UpdateDiamondsUI();
         LevelName.text = CurrentLevelName;
         LevelNotes.text = CurrentLevelNotes;
+        UpdateLivesUI();
+    }
 
-        if(_lives == 3)
-        {
-            Life1.color = Common.ChangeAlpha(Life1.color, 1f);
-            Life2.color = Common.ChangeAlpha(Life1.color, 1f);
-            Life3.color = Common.ChangeAlpha(Life1.color, 1f);
-        }
-        else if(_lives == 2)
-        {
-            Life1.color = Common.ChangeAlpha(Life1.color, 1f);
-            Life2.color = Common.ChangeAlpha(Life1.color, 1f);
-            Life3.color = Common.ChangeAlpha(Life1.color, 0.2f);
-        }
-        else if(_lives == 1)
-        {
-            Life1.color = Common.ChangeAlpha(Life1.color, 1f);
-            Life2.color = Common.ChangeAlpha(Life1.color, 0.2f);
-            Life3.color = Common.ChangeAlpha(Life1.color, 0.2f);
-        }
-        else if (_lives == 0)
-        {
-            Life1.color = Common.ChangeAlpha(Life1.color, 0.2f);
-            Life2.color = Common.ChangeAlpha(Life1.color, 0.2f);
-            Life3.color = Common.ChangeAlpha(Life1.color, 0.2f);
-        }
+    private void UpdateDiamondsUI()
+    {
+        Diamonds.text = _diamonds.ToString();
+    }
+
+    private void UpdateLivesUI()
+    {
+        if(_lives < 0 || _lives > 3)
+            return;
+
+        var color = Life1.color;
+        Life1.color = Common.ChangeAlpha(color, _lives >= 1 ? 1f : 0.2f);
+        Life2.color = Common.ChangeAlpha(color, _lives >= 2 ? 1f : 0.2f);
+        Life3.color = Common.ChangeAlpha(color, _lives >= 3 ? 1f : 0.2f);
     }
     
     private void TrackInputChange(Vector2Int raw)

@@ -60,9 +60,9 @@ Don't read, search or edit these. Leave them out of greps (for example `grep -r 
 `GameController.Update()`:
 1. Return early if the level editor is editing, the main menu is open, or a message is showing.
 2. If the game panel is hidden (a level running behind a menu), run `Tick()` only.
-3. Otherwise run `TickKye()` (input, beast check, `ProcessItem` for the target cell, move, stickers follow), then `Tick()`, then finish the level when no diamonds are left.
+3. Otherwise run `TickKye()` (input, beast check, `ProcessItem` for the target cell, move, stickers follow), then `Tick()`, then finish the level when no diamonds are left. A level that starts with no diamonds never finishes (`_levelHasDiamonds`).
 
-`Tick()` calls `Item.Tick()` on every item **in `Thinker` order**. `Thinker` is a creation counter assigned by `GameController.NewItem`. Level parsing runs from the bottom text row up, left to right, so items lower on the board think first. Spawned items get the next number, so they think last. Anything that creates an item at runtime should call `NewItem`. Changing this order changes how levels play.
+`Tick()` calls `Item.Tick()` on every item **in `Thinker` order**. `Thinker` is a creation counter assigned by `GameController.NewItem`. Level parsing runs from the bottom text row up, left to right, so items lower on the board think first. Spawned items get the next number, so they think last. Anything that creates an item at runtime should call `NewItem`. Items created without `NewItem` (the replacement timers from `Timer`) keep `Thinker` 0, so they think first. `Tick()` collects the items with `GetComponentsInChildren` into a reused list and stable-sorts it by `Thinker`, so ties keep scene order. Changing this order changes how levels play.
 
 `Item.Tick()` order: pull to sticker → `GoForward` / `Enemy` (unless stuck) → `Auto` → `Blackhole` → `Timer` → `Sploder` → pull to sticker again → re-check whether still stuck. Exceptions inside it are caught and logged, not thrown.
 
@@ -77,7 +77,7 @@ There is no fixed timestep. Every component times itself against `Time.time`: `G
 - `InsertLevel` instantiates prefabs into `ItemContainer`. If the level has no Kye, it adds one at (3, 3).
 
 ### Saving and analytics
-- `SaveSystem` writes `settings.v3.json` to `Application.persistentDataPath` and migrates the older `settings.v1.dat` / `settings.v2.dat` files.
+- `SaveSystem` writes `settings.v3.json` to `Application.persistentDataPath` and migrates the older `settings.v1.dat` / `settings.v2.dat` files. `Save` skips the disk write when the settings JSON is unchanged since the last write.
 - WebGL builds force `UnlockAllLevels`.
 - `KyeAnalytics` posts to `https://playkye.com/log.php`, in the Editor and WebGL only.
 
@@ -88,15 +88,18 @@ There is no fixed timestep. Every component times itself against `Time.time`: `G
 - it **moves** the Help and Settings buttons 50 px to the right,
 - it **rewires** the Levels button's `selectOnDown` to Settings, for controller and keyboard navigation.
 
+Separately, under `#if UNITY_WEBGL` only (not the Editor), it hides the Open and Save buttons listed in its `HideOnWebGL` array (the level picker's Open button and the level editor's Open and Save buttons). `LevelEditor` also compiles out its Ctrl+S and O shortcuts on WebGL.
+
 Including `UNITY_EDITOR` is deliberate: the Editor shows the mobile/web layout.
 
 **Before any main-menu change** (adding, removing, moving or reordering buttons, or changing navigation), read `OSAdjustments.cs` and check that the change still works both with and without these adjustments. Update the script if needed.
 
 Other platform-specific code:
 - `DisableByPlatform` component: used on several scene objects to hide them on iOS, Android or WebGL.
-- `GameController.ClickOpen`: on Windows, the file dialog opens in Documents by default.
+- `Common.GetDefaultFilePath()`: the default folder for file dialogs (`GameController.ClickOpen` and the `LevelEditor` open/save dialogs). Android, iOS and WebGL use `persistentDataPath`; other platforms use Documents.
+- The main menu background level is `settings.LastLevelPlayed`, the same level the Play button loads.
 
 
 
 ## Rules
-Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking. If you think it is needed, git commit before beginning a large change.
+Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking. If you think it is needed, git commit before beginning a large change. If you are changing something mentioned in CLAUDE.md, suggest relevant changes.

@@ -126,7 +126,7 @@ public class LevelEditor : MonoBehaviour
         FileBrowser.ShowLoadDialog(
             FileBrowserOnOpenSuccess,
             FileBrowserOnCancel,
-            FileBrowser.PickMode.Files, false, null
+            FileBrowser.PickMode.Files, false, Common.GetDefaultFilePath()
         );
     }
 
@@ -205,7 +205,7 @@ public class LevelEditor : MonoBehaviour
         FileBrowser.SetDefaultFilter(".kye");
 
         // Default back to the file we came from
-        string initialPath = null;
+        string initialPath = Common.GetDefaultFilePath();
         string initialName = Clean(LevelName.text).Trim() + ".kye";
         if (!string.IsNullOrEmpty(_sourceFilePath))
         {
@@ -506,13 +506,17 @@ public class LevelEditor : MonoBehaviour
             bool ctrl = kb.ctrlKey.isPressed;
 
             // Ctrl+S works even while typing in a text field; single-letter shortcuts do not.
+#if !UNITY_WEBGL
             if (ctrl && kb.sKey.wasPressedThisFrame)
                 ClickSave();
+#endif
 
             if (!typing)
             {
                 if (kb.pKey.wasPressedThisFrame) ClickPlay();
+#if !UNITY_WEBGL
                 if (kb.oKey.wasPressedThisFrame) ClickOpen();
+#endif
                 if (kb.kKey.wasPressedThisFrame) ShowK64();
             }
         }
