@@ -22,22 +22,24 @@ Assets/
   Settings/Build Profiles/   Unity build profiles
   URP*, URPDefaultResources/, UniversalRenderPipelineGlobalSettings.asset   Render pipeline config
   _Recovery/          Unity scene-recovery output, not real content
-Export/<Platform>/    Build output (gitignored); Export/Packages/ holds the release packages
+Export/<Platform>/    Build output (gitignored); Export/Packages/<version>/ holds the release packages
 Stuff/                Non-Unity code: release tooling, not part of the game
   Launcher/           Kye auto-updater (C#, net48) and the NSIS script for Kye-Setup.exe
   appimage/           AppDir and appimagetool for the Linux AppImage
+  portmaster/         PortMaster ports (unityloader is the one build.sh uses)
 build.sh              Builds and packages every platform (see Building)
 ```
 
 ## Building
 
-`./build.sh [linux windows mac android web]` (default: all five) runs Unity in batch mode once per platform through `BuildScript.Build`, then packages. A full build deletes `Export/` first; a partial build only clears the folders it rebuilds. Unity logs go to `Export/logs/`. The editor binary comes from `ProjectVersion.txt` (override with `UNITY=`), and the version from `bundleVersion`. The Unity editor must not have the project open.
+`./build.sh [linux windows mac android web]` (default: all five) runs Unity in batch mode once per platform through `BuildScript.Build`, then packages. A full build deletes `Export/` first; a partial build only clears the folders it rebuilds. Unity logs go to `Export/logs/`. The script ends with a stats table (Unity time, packaging time and total per platform, plus package sizes). The editor binary comes from `ProjectVersion.txt` (override with `UNITY=`), and the version from `bundleVersion`. The Unity editor must not have the project open.
 
-Packages land in `Export/Packages/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `.apk`, plus `Kye-Setup.exe`. The Web build stays in `Export/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
+Packages land in `Export/Packages/<version>/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `.apk`, `kye.zip` (PortMaster), plus `Kye-Setup.exe`. The Web build stays in `Export/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
 
 - **Windows**: the zip has the game files at its root (the Launcher extracts it straight into its `app` folder). `Stuff/Launcher/nsis/app` is emptied and replaced with the Windows build, then `Stuff/Launcher/build.sh` produces `Kye-Setup.exe`.
 - **Linux AppImage**: `Stuff/appimage/AppDir/usr/bin` is emptied and replaced with the Linux build, then `ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir Kye-<version>.AppImage`.
 - **Android**: builds an `.apk`, not an `.aab`.
+- **PortMaster**: after the apk, its `lib/*` is copied over `Stuff/portmaster/unityloader/kye/gamedata/lib/`, and `assets/bin/Data/` replaces (the target is emptied first) `kye/gamedata/assets/bin/Data/`. `versionName` in `kye/kye.toml` is set to the current version. `Kye.sh` and `kye/` are then zipped to `Export/Packages/<version>/kye.zip`.
 
 ## Third-party folders: never read or edit
 

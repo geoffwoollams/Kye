@@ -148,3 +148,8 @@ crashlytics-build.properties
 /Stuff/Launcher/src/app.ico
 /Stuff/Launcher/src/bin/
 /Stuff/Launcher/src/obj/
+
+/Stuff/portmaster/unityloader/kye/gamedata/lib/
+/Stuff/portmaster/unityloader/kye/gamedata/assets/bin/Data/
+/Stuff/portmaster/unityloader-u6.0/kye/gamedata/lib/
+/Stuff/portmaster/unityloader-u6.0/kye/gamedata/assets/bin/Data/
