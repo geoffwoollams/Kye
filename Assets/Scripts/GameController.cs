@@ -405,6 +405,15 @@ public class GameController : MonoBehaviour
             y -= 55;
             ln++;
 
+            // Locked rows are left out of the up/down/left/right links so navigation skips them.
+            if (!isUnlocked)
+            {
+                var lockedNav = view.ItemButton.navigation;
+                lockedNav.mode = Navigation.Mode.None;
+                view.ItemButton.navigation = lockedNav;
+                continue;
+            }
+
             var itemButton = view.ItemButton;
             var editButton = view.EditButton;
 
