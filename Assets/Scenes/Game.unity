@@ -1522,8 +1522,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: stickertb
   border: {fileID: 0}
-  PreviousButton: {fileID: 456758481}
-  NextButton: {fileID: 2106940242}
 --- !u!1 &42917008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1876,8 +1874,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: doorrl
   border: {fileID: 0}
-  PreviousButton: {fileID: 1008611704}
-  NextButton: {fileID: 1317111936}
 --- !u!1 &70417125
 GameObject:
   m_ObjectHideFlags: 0
@@ -2586,8 +2582,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: sploder
   border: {fileID: 0}
-  PreviousButton: {fileID: 1805954844}
-  NextButton: {fileID: 766485450}
 --- !u!1 &140250991
 GameObject:
   m_ObjectHideFlags: 0
@@ -3507,8 +3501,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: guard
   border: {fileID: 0}
-  PreviousButton: {fileID: 656983102}
-  NextButton: {fileID: 1805954844}
 --- !u!114 &220003851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5497,8 +5489,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: twister
   border: {fileID: 0}
-  PreviousButton: {fileID: 835574345}
-  NextButton: {fileID: 1969007211}
 --- !u!1 &450116998
 GameObject:
   m_ObjectHideFlags: 0
@@ -5821,8 +5811,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall2
   border: {fileID: 0}
-  PreviousButton: {fileID: 796133238}
-  NextButton: {fileID: 41842123}
 --- !u!1 &461392501
 GameObject:
   m_ObjectHideFlags: 0
@@ -6035,7 +6023,7 @@ RectTransform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_LocalScale: {x: 0.35, y: 0.35, z: 0.35}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 222044761}
@@ -6044,7 +6032,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -336.3, y: -50}
+  m_AnchoredPosition: {x: -316, y: -69}
   m_SizeDelta: {x: 294, y: 294}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &483094557
@@ -8144,7 +8132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8470589, g: 0.7490196, b: 0.8470589, a: 1}
+  m_Color: {r: 0.9607844, g: 0.8705883, b: 0.7019608, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -8735,8 +8723,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: blackhole
   border: {fileID: 0}
-  PreviousButton: {fileID: 1839864654}
-  NextButton: {fileID: 835574345}
 --- !u!1 &656983097
 GameObject:
   m_ObjectHideFlags: 0
@@ -8885,8 +8871,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: earth
   border: {fileID: 0}
-  PreviousButton: {fileID: 1617301296}
-  NextButton: {fileID: 220003850}
 --- !u!1 &665260879
 GameObject:
   m_ObjectHideFlags: 0
@@ -9233,8 +9217,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: doordu
   border: {fileID: 0}
-  PreviousButton: {fileID: 953926206}
-  NextButton: {fileID: 1509058005}
 --- !u!1 &682727761
 GameObject:
   m_ObjectHideFlags: 0
@@ -10079,8 +10061,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: autorocky
   border: {fileID: 0}
-  PreviousButton: {fileID: 2106940242}
-  NextButton: {fileID: 922969245}
 --- !u!1 &713591121
 GameObject:
   m_ObjectHideFlags: 0
@@ -11067,8 +11047,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: timer9
   border: {fileID: 0}
-  PreviousButton: {fileID: 139841884}
-  NextButton: {fileID: 997915570}
 --- !u!1 &770226845
 GameObject:
   m_ObjectHideFlags: 0
@@ -11609,8 +11587,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: stickerlr
   border: {fileID: 0}
-  PreviousButton: {fileID: 997915570}
-  NextButton: {fileID: 456758481}
 --- !u!1 &803830270
 GameObject:
   m_ObjectHideFlags: 0
@@ -12083,8 +12059,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: diamond
   border: {fileID: 0}
-  PreviousButton: {fileID: 651206353}
-  NextButton: {fileID: 437268225}
 --- !u!1 &849644177
 GameObject:
   m_ObjectHideFlags: 0
@@ -12233,8 +12207,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: doorud
   border: {fileID: 0}
-  PreviousButton: {fileID: 2052802318}
-  NextButton: {fileID: 953926206}
 --- !u!1 &853268952
 GameObject:
   m_ObjectHideFlags: 0
@@ -13350,8 +13322,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: gnasher
   border: {fileID: 0}
-  PreviousButton: {fileID: 894811811}
-  NextButton: {fileID: 1711896188}
 --- !u!114 &891838127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13533,8 +13503,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: sliderright
   border: {fileID: 0}
-  PreviousButton: {fileID: 1618570698}
-  NextButton: {fileID: 886732850}
 --- !u!1 &901537639
 GameObject:
   m_ObjectHideFlags: 0
@@ -13567,7 +13535,7 @@ RectTransform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_LocalScale: {x: 0.35, y: 0.35, z: 0.35}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1703074410}
@@ -13576,7 +13544,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -251.9, y: -50}
+  m_AnchoredPosition: {x: -191, y: -69.000015}
   m_SizeDelta: {x: 294, y: 294}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &901537641
@@ -13863,8 +13831,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: doorlr
   border: {fileID: 0}
-  PreviousButton: {fileID: 1509058005}
-  NextButton: {fileID: 1008611704}
 --- !u!1 &916008843
 GameObject:
   m_ObjectHideFlags: 0
@@ -14291,8 +14257,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall4
   border: {fileID: 0}
-  PreviousButton: {fileID: 706533208}
-  NextButton: {fileID: 1932434488}
 --- !u!1 &929384102
 GameObject:
   m_ObjectHideFlags: 0
@@ -14879,8 +14843,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall6
   border: {fileID: 0}
-  PreviousButton: {fileID: 849644182}
-  NextButton: {fileID: 676071774}
 --- !u!1 &954859299
 GameObject:
   m_ObjectHideFlags: 0
@@ -15365,8 +15327,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall1
   border: {fileID: 0}
-  PreviousButton: {fileID: 766485450}
-  NextButton: {fileID: 796133238}
 --- !u!1 &1008611699
 GameObject:
   m_ObjectHideFlags: 0
@@ -15515,8 +15475,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall8
   border: {fileID: 0}
-  PreviousButton: {fileID: 911113907}
-  NextButton: {fileID: 56939256}
 --- !u!1 &1013252540
 GameObject:
   m_ObjectHideFlags: 0
@@ -15553,11 +15511,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 4413164588122262815}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 261.8, y: -25.4}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -8.999939, y: -10.9999695}
   m_SizeDelta: {x: 26, y: 24}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &1013252542
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15984,8 +15942,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: rockyright
   border: {fileID: 0}
-  PreviousButton: {fileID: 1471698789}
-  NextButton: {fileID: 1618570698}
 --- !u!1 &1023436918
 GameObject:
   m_ObjectHideFlags: 0
@@ -20230,8 +20186,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall9
   border: {fileID: 0}
-  PreviousButton: {fileID: 56939256}
-  NextButton: {fileID: 2014250011}
 --- !u!1 &1331255663
 GameObject:
   m_ObjectHideFlags: 0
@@ -22022,8 +21976,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: spike
   border: {fileID: 0}
-  PreviousButton: {fileID: 1969007211}
-  NextButton: {fileID: 1021162097}
 --- !u!1 &1478110361
 GameObject:
   m_ObjectHideFlags: 0
@@ -22255,7 +22207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8470589, g: 0.7490196, b: 0.8470589, a: 1}
+  m_Color: {r: 0.9607844, g: 0.8705883, b: 0.7019608, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -22706,8 +22658,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall7
   border: {fileID: 0}
-  PreviousButton: {fileID: 676071774}
-  NextButton: {fileID: 911113907}
 --- !u!1 &1514367428
 GameObject:
   m_ObjectHideFlags: 0
@@ -23664,8 +23614,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: tracker
   border: {fileID: 0}
-  PreviousButton: {fileID: 2056404032}
-  NextButton: {fileID: 656983102}
 --- !u!114 &1617301298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23963,8 +23911,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: virus
   border: {fileID: 0}
-  PreviousButton: {fileID: 1021162097}
-  NextButton: {fileID: 894811811}
 --- !u!1 &1638627576
 GameObject:
   m_ObjectHideFlags: 0
@@ -24825,8 +24771,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: clocker
   border: {fileID: 0}
-  PreviousButton: {fileID: 886732850}
-  NextButton: {fileID: 1904814038}
 --- !u!1 &1740634080
 GameObject:
   m_ObjectHideFlags: 0
@@ -25681,8 +25625,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: blockrocky
   border: {fileID: 0}
-  PreviousButton: {fileID: 220003850}
-  NextButton: {fileID: 139841884}
 --- !u!1 &1806735597
 GameObject:
   m_ObjectHideFlags: 0
@@ -26430,8 +26372,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: kye
   border: {fileID: 0}
-  PreviousButton: {fileID: 2014250011}
-  NextButton: {fileID: 651206353}
 --- !u!1 &1847994592
 GameObject:
   m_ObjectHideFlags: 0
@@ -26997,8 +26937,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: blob
   border: {fileID: 0}
-  PreviousButton: {fileID: 1711896188}
-  NextButton: {fileID: 2056404032}
 --- !u!1 &1919482550
 GameObject:
   m_ObjectHideFlags: 0
@@ -27241,8 +27179,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: autoslider
   border: {fileID: 0}
-  PreviousButton: {fileID: 922969245}
-  NextButton: {fileID: 2052802318}
 --- !u!1 &1945616298
 GameObject:
   m_ObjectHideFlags: 0
@@ -27914,8 +27850,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: bouncerright
   border: {fileID: 0}
-  PreviousButton: {fileID: 437268225}
-  NextButton: {fileID: 1471698789}
 --- !u!1 &1980733195
 GameObject:
   m_ObjectHideFlags: 0
@@ -28280,7 +28214,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.9803922, b: 0.9411765, a: 1}
+  m_Color: {r: 0.9622642, g: 0.8729975, b: 0.6944642, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -28614,8 +28548,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: clear
   border: {fileID: 0}
-  PreviousButton: {fileID: 1317111936}
-  NextButton: {fileID: 1839864654}
 --- !u!1 &2027677887
 GameObject:
   m_ObjectHideFlags: 0
@@ -28944,8 +28876,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall5
   border: {fileID: 0}
-  PreviousButton: {fileID: 1932434488}
-  NextButton: {fileID: 849644182}
 --- !u!1 &2053937627
 GameObject:
   m_ObjectHideFlags: 0
@@ -29256,8 +29186,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: blocksquare
   border: {fileID: 0}
-  PreviousButton: {fileID: 1904814038}
-  NextButton: {fileID: 1617301296}
 --- !u!1 &2069633585
 GameObject:
   m_ObjectHideFlags: 0
@@ -29993,8 +29921,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelEditorItemButton
   ItemButtonName: wall3
   border: {fileID: 0}
-  PreviousButton: {fileID: 41842123}
-  NextButton: {fileID: 706533208}
 --- !u!1 &2108606583
 GameObject:
   m_ObjectHideFlags: 0
@@ -31808,7 +31734,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3519641102703666901
 RectTransform:
   m_ObjectHideFlags: 0
@@ -32034,8 +31960,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 96.6, y: -56.9}
-  m_SizeDelta: {x: 560, y: 50}
+  m_AnchoredPosition: {x: 160, y: -73}
+  m_SizeDelta: {x: 420, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4446899265679272602
 MonoBehaviour:
@@ -32081,7 +32007,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 5742200095478843750}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.24999999
+  m_Size: 0.22999999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -32463,8 +32389,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -50}
-  m_SizeDelta: {x: 750, y: -100}
+  m_AnchoredPosition: {x: 0, y: -70}
+  m_SizeDelta: {x: 750, y: -140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &5742200095478843750
 RectTransform:
@@ -32481,8 +32407,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3089545542068392212}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.75}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -32580,7 +32506,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 27.5
+  m_fontSize: 72
   m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -33551,7 +33477,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8740945951023433439
 RectTransform:
   m_ObjectHideFlags: 0
