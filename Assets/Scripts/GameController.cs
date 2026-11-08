@@ -235,50 +235,106 @@ public class GameController : MonoBehaviour
         return rows;
     }
 
-    private void LevelPickerItemInit(GameObject levelItem, PickerRow row, int y, int ln, bool unlocked)
+    // A level picker row that is created once and reused. The cached fields remember what the row
+    // currently shows so a refresh only touches what actually changed (UI changes are what cost time).
+    private sealed class PickerView
     {
-        var LevelName = levelItem.transform.Find("LevelName").GetComponent<TMPro.TMP_Text>();
-        var LevelNotes = levelItem.transform.Find("LevelNotes").GetComponent<TMPro.TMP_Text>();
-        var LevelButton = levelItem.GetComponent<Button>();
-        var EditButton = levelItem.transform.Find("Edit").GetComponent<Button>();
+        public GameObject Go;
+        public RectTransform Rect;
+        public LevelItem Item;
+        public Button ItemButton, EditButton;
+        public TMP_Text NameText, NotesText, NumberText;
+        public GameObject NumberObj, LockObj;
 
-        var LevelNumber = levelItem.transform.Find("Number").Find("LevelNumber").GetComponent<TMPro.TMP_Text>();
-        LevelNumber.text = ln.ToString();
+        public string BoundB64;         // level the title/hint/name are set for
+        public int Number = -1;
+        public float Y = float.NaN;
+        public float BestTime = -1f;    // 0 = none shown
+        public int UnlockedState = -1;  // -1 unknown, 0 locked, 1 unlocked
+    }
 
-        var levelItemRect = levelItem.GetComponent<RectTransform>();
-        var levelItemRectPosition = levelItemRect.anchoredPosition;
-        levelItemRectPosition.y = y;
-        levelItemRect.anchoredPosition = levelItemRectPosition;
+    private readonly List<PickerView> _pickerViews = new List<PickerView>();
 
-        LevelName.text = row.Title;
-        LevelNotes.text = row.Hint;
+    private PickerView CreatePickerView()
+    {
+        var go = Instantiate(LevelPickerItem);
+        go.transform.SetParent(LevelPickerContainer.transform, false);
 
-        levelItem.name = "LevelItem " + LevelName.text;
-
-        LevelItem lItem = levelItem.GetComponent<LevelItem>();
-
-        float? bestTime = AppController.Instance.settings.GetBestTime(LevelName.text.ToLower());
-        if (bestTime != null && bestTime > 0)
+        var view = new PickerView
         {
-            lItem.bestTimeText.gameObject.SetActive(true);
-            lItem.bestTimeText.text = Common.FormatTime(bestTime);
-        }
-        else
+            Go = go,
+            Rect = go.GetComponent<RectTransform>(),
+            Item = go.GetComponent<LevelItem>(),
+            ItemButton = go.GetComponent<Button>(),
+            EditButton = go.transform.Find("Edit").GetComponent<Button>(),
+            NameText = go.transform.Find("LevelName").GetComponent<TMP_Text>(),
+            NotesText = go.transform.Find("LevelNotes").GetComponent<TMP_Text>(),
+            NumberObj = go.transform.Find("Number").gameObject,
+            LockObj = go.transform.Find("Lock").gameObject,
+        };
+        view.NumberText = view.NumberObj.transform.Find("LevelNumber").GetComponent<TMP_Text>();
+
+        // Added once. A locked row has a non-interactable button and a hidden Edit button.
+        view.ItemButton.onClick.AddListener(LevelPickerClick);
+        view.EditButton.onClick.AddListener(LevelPickerEditClick);
+        return view;
+    }
+
+    private static void SetPickerViewActive(PickerView view, bool active)
+    {
+        if (view.Go.activeSelf != active)
+            view.Go.SetActive(active);
+    }
+
+    // Sets everything about a row: the parts that depend only on the level (only when the row is
+    // showing a different level), then position, number, best time and lock state (only if changed).
+    private void UpdatePickerView(PickerView view, PickerRow row, float y, int ln, bool unlocked)
+    {
+        if (view.BoundB64 != row.B64)
         {
-            lItem.bestTimeText.gameObject.SetActive(false);
+            view.BoundB64 = row.B64;
+            view.Item.b64 = row.B64;
+            view.NameText.text = row.Title;
+            view.NotesText.text = row.Hint;
+            view.Go.name = "LevelItem " + row.Title;
+            view.BestTime = -1f; // force the best time below to be set again
         }
 
-        if(unlocked)
+        if (view.Y != y)
         {
-            LevelButton.onClick.AddListener(delegate { LevelPickerClick(); });
-            EditButton.onClick.AddListener(delegate{LevelPickerEditClick();});
+            view.Y = y;
+            var pos = view.Rect.anchoredPosition;
+            pos.y = y;
+            view.Rect.anchoredPosition = pos;
         }
-        else
+
+        if (view.Number != ln)
         {
-            levelItem.transform.Find("Number").gameObject.SetActive(false);
-            levelItem.transform.Find("Lock").gameObject.SetActive(true);
-            EditButton.gameObject.SetActive(false);
+            view.Number = ln;
+            view.NumberText.text = ln.ToString();
         }
+
+        float? bestTime = AppController.Instance.settings.GetBestTime(row.TitleLower);
+        float best = bestTime != null && bestTime > 0 ? bestTime.Value : 0f;
+        if (view.BestTime != best)
+        {
+            view.BestTime = best;
+            view.Item.bestTimeText.gameObject.SetActive(best > 0);
+            if (best > 0)
+                view.Item.bestTimeText.text = Common.FormatTime(best);
+        }
+
+        int state = unlocked ? 1 : 0;
+        if (view.UnlockedState != state)
+        {
+            view.UnlockedState = state;
+            view.ItemButton.interactable = unlocked;
+            view.NumberObj.SetActive(unlocked);
+            view.LockObj.SetActive(!unlocked);
+            view.EditButton.gameObject.SetActive(unlocked);
+        }
+
+        SetPickerViewActive(view, true);
     }
 
     public string GetLevelName(string b64)
@@ -304,13 +360,11 @@ public class GameController : MonoBehaviour
         LoadLevelPicker(RowsFromDictionary(levels), unlockAll);
     }
 
+    // Shows the given levels in the picker. The row objects are created once and reused, so opening
+    // the picker or typing in the filter doesn't create or destroy anything; best times and lock state
+    // are refreshed from the settings every call.
     private void LoadLevelPicker(List<PickerRow> rows, bool unlockAll)
     {
-        while (LevelPickerContainer.transform.childCount > 0)
-        {
-            DestroyImmediate(LevelPickerContainer.transform.GetChild(0).gameObject);
-        }
-        
         var filterInput = LoadLevelInput.text.Trim();
         var filter = filterInput.ToLower();
 
@@ -325,96 +379,84 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        int y = -5;
+        while (_pickerViews.Count < rows.Count)
+            _pickerViews.Add(CreatePickerView());
 
-        GameObject prevItem = null;
-        Button prevItemButton = null, prevEditButton = null;
+        int y = -5;
+        int ln = 1;
+
+        PickerView prev = null;
         var primaryButton = LevelsScreenPrimaryButton.GetComponent<Button>();
         Selectable selectOnUp = primaryButton;
 
-        bool doneFirst = false;
-
-        int ln = 1;
-
-        foreach (var row in rows)
+        for (int i = 0; i < rows.Count; i++)
         {
-            bool isUnlocked = Common.IsLevelUnlocked(row.Key);
-            if(unlockAll)
-                isUnlocked = true;
-            
-            if (filter == "" || row.TitleLower.Contains(filter))
+            var row = rows[i];
+            var view = _pickerViews[i];
+
+            if (filter != "" && !row.TitleLower.Contains(filter))
             {
-                var levelItem = Instantiate(LevelPickerItem);
-                levelItem.transform.SetParent(LevelPickerContainer.transform, false);
-                var lItem = levelItem.GetComponent<LevelItem>();
-                lItem.b64 = row.B64;
-                LevelPickerItemInit(levelItem, row, y, ln, isUnlocked);
-                y -= 55;
-
-                ln++;
-                
-                var editButton = levelItem.transform.Find("Edit").GetComponent<Button>();
-                var itemButton = levelItem.GetComponent<Button>();
-                
-                Navigation editNav = editButton.navigation;
-                editNav.mode = Navigation.Mode.Explicit;
-                
-                if(prevItem)
-                    editNav.selectOnUp = prevEditButton;
-                else
-                    editNav.selectOnUp = primaryButton;
-                
-                editNav.selectOnLeft = itemButton;
-                editButton.navigation = editNav;
-                
-                Navigation itemNav = itemButton.navigation;
-                itemNav.mode = Navigation.Mode.Explicit;
-                itemNav.selectOnUp = selectOnUp;
-                itemNav.selectOnRight = editButton;
-                itemButton.navigation = itemNav;
-
-                if(!isUnlocked)
-                {
-                    itemButton.interactable = false;
-                }
-
-                if (!doneFirst)
-                {
-                    var nav = primaryButton.navigation;
-                    nav.selectOnDown = itemButton;
-                    primaryButton.navigation = nav;
-
-                    var buttonOpen = LevelsScreenOpenButton.GetComponent<Button>();
-                    nav = buttonOpen.navigation;
-                    nav.selectOnDown = itemButton;
-                    buttonOpen.navigation = nav;
-
-                    var searchInput = LoadLevelInput.GetComponent<TMP_InputField>();
-                    nav = searchInput.navigation;
-                    nav.selectOnDown = itemButton;
-                    searchInput.navigation = nav;
-
-                    doneFirst = true;
-                }
-
-                if (prevItem)
-                {
-                    Navigation prevEditNav = prevEditButton.navigation;
-                    prevEditNav.selectOnDown = editButton;
-                    prevEditButton.navigation = prevEditNav;
-                    
-                    Navigation prevNav = prevItemButton.navigation;
-                    prevNav.mode = Navigation.Mode.Explicit;
-                    prevNav.selectOnDown = itemButton;
-                    prevItemButton.navigation = prevNav;
-                }
-
-                prevItem = levelItem;
-                prevItemButton = itemButton;
-                prevEditButton = editButton;
-                selectOnUp = itemButton;
+                SetPickerViewActive(view, false);
+                continue;
             }
+
+            bool isUnlocked = unlockAll || Common.IsLevelUnlocked(row.Key);
+            UpdatePickerView(view, row, y, ln, isUnlocked);
+            y -= 55;
+            ln++;
+
+            var itemButton = view.ItemButton;
+            var editButton = view.EditButton;
+
+            // Rows are reused, so every link is set again (a stale "down" link would point at an old neighbour).
+            Navigation editNav = editButton.navigation;
+            editNav.mode = Navigation.Mode.Explicit;
+            editNav.selectOnUp = prev != null ? prev.EditButton : primaryButton;
+            editNav.selectOnDown = null;
+            editNav.selectOnLeft = itemButton;
+            editButton.navigation = editNav;
+
+            Navigation itemNav = itemButton.navigation;
+            itemNav.mode = Navigation.Mode.Explicit;
+            itemNav.selectOnUp = selectOnUp;
+            itemNav.selectOnDown = null;
+            itemNav.selectOnRight = editButton;
+            itemButton.navigation = itemNav;
+
+            if (prev == null)
+            {
+                var nav = primaryButton.navigation;
+                nav.selectOnDown = itemButton;
+                primaryButton.navigation = nav;
+
+                var buttonOpen = LevelsScreenOpenButton.GetComponent<Button>();
+                nav = buttonOpen.navigation;
+                nav.selectOnDown = itemButton;
+                buttonOpen.navigation = nav;
+
+                var searchInput = LoadLevelInput.GetComponent<TMP_InputField>();
+                nav = searchInput.navigation;
+                nav.selectOnDown = itemButton;
+                searchInput.navigation = nav;
+            }
+            else
+            {
+                Navigation prevEditNav = prev.EditButton.navigation;
+                prevEditNav.selectOnDown = editButton;
+                prev.EditButton.navigation = prevEditNav;
+
+                Navigation prevNav = prev.ItemButton.navigation;
+                prevNav.mode = Navigation.Mode.Explicit;
+                prevNav.selectOnDown = itemButton;
+                prev.ItemButton.navigation = prevNav;
+            }
+
+            prev = view;
+            selectOnUp = itemButton;
         }
+
+        for (int i = rows.Count; i < _pickerViews.Count; i++)
+            SetPickerViewActive(_pickerViews[i], false);
 
         var container = LevelPickerContainer.GetComponent<RectTransform>();
 
