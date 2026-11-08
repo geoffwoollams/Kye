@@ -417,22 +417,6 @@ public class Common : MonoBehaviour
         return Vector2.zero;
     }
 
-    private static List<string> _levelKeys;
-    private static Dictionary<string, int> _levelIndex;
-
-    // Built-in levels in progression order (the dictionary's insertion order).
-    private static void EnsureLevelIndex()
-    {
-        var classicLevels = Levels.Classic;
-        if (_levelKeys != null && _levelKeys.Count == classicLevels.Count)
-            return;
-
-        _levelKeys = new List<string>(classicLevels.Keys);
-        _levelIndex = new Dictionary<string, int>(_levelKeys.Count);
-        for (int i = 0; i < _levelKeys.Count; i++)
-            _levelIndex[_levelKeys[i]] = i;
-    }
-
     public static bool IsNextLevelUnlocked(string levelName)
     {
         if (AppController.Instance.settings.UnlockAllLevels)
@@ -444,60 +428,39 @@ public class Common : MonoBehaviour
 
     public static bool IsLevelUnlocked(string levelName)
     {
-        if (AppController.Instance.settings.UnlockAllLevels)
+        var settings = AppController.Instance.settings;
+        if (settings.UnlockAllLevels)
             return true;
-        
+
         levelName = levelName.ToLower().Trim();
 
         if (levelName == "")
-            levelName = "first";
-
-        EnsureLevelIndex();
-
-        if (!_levelIndex.TryGetValue(levelName, out int levelIdx))
             return true;
 
-        string currentUnlocked = AppController.Instance.settings.UnlockedLevel.ToLower().Trim();
-
-        // An unknown unlocked level unlocks everything.
-        if (!_levelIndex.TryGetValue(currentUnlocked, out int unlockedIdx))
+        int levelIdx = Levels.IndexOf(levelName);
+        if (levelIdx < 0)
             return true;
 
-        return levelIdx <= unlockedIdx;
-    }
-
-    public static void UpdateUnlockedLevel(string levelName)
-    {
-        levelName = levelName.ToLower().Trim();
-
-        EnsureLevelIndex();
-
-        if (!_levelIndex.TryGetValue(levelName, out int newIndex)) return;
-
-        string currentUnlocked = AppController.Instance.settings.UnlockedLevel.ToLower().Trim();
-        if (!_levelIndex.TryGetValue(currentUnlocked, out int currentIndex))
-            currentIndex = -1;
-
-        if (newIndex > (currentIndex - 1))
-        {
-            AppController.Instance.settings.UnlockedLevel = GetNextLevelKey(levelName);
-            AppController.Instance.Save();
-        }
+        // The first level, any level with a best time, or the level after one with a best time.
+        if (levelIdx == 0)
+            return true;
+        if (settings.GetBestTime(levelName) != null)
+            return true;
+        return settings.GetBestTime(Levels.NameAt(levelIdx - 1)) != null;
     }
 
     public static string GetNextLevelKey(string currentKey)
     {
-        EnsureLevelIndex();
-
-        if (currentKey == null || !_levelIndex.TryGetValue(currentKey, out int currentIndex))
+        int currentIndex = Levels.IndexOf(currentKey);
+        if (currentIndex < 0)
             return currentKey;
 
         int nextIndex = currentIndex + 1;
         
-        if (nextIndex >= _levelKeys.Count)
+        if (nextIndex >= Levels.Count)
             return currentKey;
 
-        return _levelKeys[nextIndex];
+        return Levels.NameAt(nextIndex);
     }
     
     public static string FormatTime(float? seconds)

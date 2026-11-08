@@ -60,7 +60,7 @@ public class GameController : MonoBehaviour
     private float _lastAutoMove;
     private GameObject _autoFollowGhost;
 
-    public Item[,] Items = new Item[30, 20];
+    [System.NonSerialized] public Item[,] Items = new Item[30, 20];
 
     private Vector2 _input;
     public Vector2Int _inputClickPosition;
@@ -115,7 +115,7 @@ public class GameController : MonoBehaviour
         VersionNote.text = "Version " + Application.version;
 
 #if UNITY_EDITOR
-        Levels.CheckForDuplicates(Levels.Classic);
+        Levels.CheckForDuplicates();
 #endif
     }
 
@@ -195,7 +195,47 @@ public class GameController : MonoBehaviour
         return header;
     }
 
-    private void LevelPickerItemInit(GameObject levelItem, string levelB64, int y, int ln, bool unlocked)
+    // One row of the level picker. Everything needed to filter and draw the row, so no level has to be decoded.
+    private readonly struct PickerRow
+    {
+        public readonly string Key, Title, TitleLower, Hint, B64;
+
+        public PickerRow(string key, string title, string titleLower, string hint, string b64)
+        {
+            Key = key;
+            Title = title;
+            TitleLower = titleLower;
+            Hint = hint;
+            B64 = b64;
+        }
+    }
+
+    private static List<PickerRow> _classicRows;
+
+    private static List<PickerRow> ClassicRows()
+    {
+        if (_classicRows == null)
+        {
+            var rows = new List<PickerRow>(Levels.Count);
+            for (int i = 0; i < Levels.Count; i++)
+                rows.Add(new PickerRow(Levels.NameAt(i), Levels.TitleAt(i), Levels.TitleLowerAt(i), Levels.HintAt(i), Levels.GetB64At(i)));
+            _classicRows = rows;
+        }
+        return _classicRows;
+    }
+
+    private static List<PickerRow> RowsFromDictionary(Dictionary<string, string> levels)
+    {
+        var rows = new List<PickerRow>(levels.Count);
+        foreach (var entry in levels)
+        {
+            var header = GetLevelHeader(entry.Value);
+            rows.Add(new PickerRow(entry.Key, header[0], header[0].ToLower(), header[1], entry.Value));
+        }
+        return rows;
+    }
+
+    private void LevelPickerItemInit(GameObject levelItem, PickerRow row, int y, int ln, bool unlocked)
     {
         var LevelName = levelItem.transform.Find("LevelName").GetComponent<TMPro.TMP_Text>();
         var LevelNotes = levelItem.transform.Find("LevelNotes").GetComponent<TMPro.TMP_Text>();
@@ -210,9 +250,8 @@ public class GameController : MonoBehaviour
         levelItemRectPosition.y = y;
         levelItemRect.anchoredPosition = levelItemRectPosition;
 
-        var header = GetLevelHeader(levelB64);
-        LevelName.text = header[0];
-        LevelNotes.text = header[1];
+        LevelName.text = row.Title;
+        LevelNotes.text = row.Hint;
 
         levelItem.name = "LevelItem " + LevelName.text;
 
@@ -256,11 +295,16 @@ public class GameController : MonoBehaviour
 
     public void LoadLevelPicker()
     {
-        LoadLevelPicker(Levels.Classic, false);
+        LoadLevelPicker(ClassicRows(), false);
         LoadLevelInput.gameObject.SetActive(true);
     }
 
     public void LoadLevelPicker(Dictionary<string, string> levels, bool unlockAll)
+    {
+        LoadLevelPicker(RowsFromDictionary(levels), unlockAll);
+    }
+
+    private void LoadLevelPicker(List<PickerRow> rows, bool unlockAll)
     {
         while (LevelPickerContainer.transform.childCount > 0)
         {
@@ -292,22 +336,19 @@ public class GameController : MonoBehaviour
 
         int ln = 1;
 
-        foreach (KeyValuePair<string, string> entry in levels)
+        foreach (var row in rows)
         {
-            string levelKey = entry.Key;
-            string levelB64 = entry.Value;
-
-            bool isUnlocked = Common.IsLevelUnlocked(levelKey);
+            bool isUnlocked = Common.IsLevelUnlocked(row.Key);
             if(unlockAll)
                 isUnlocked = true;
             
-            if (filter == "" || GetLevelName(levelB64).ToLower().Contains(filter))
+            if (filter == "" || row.TitleLower.Contains(filter))
             {
                 var levelItem = Instantiate(LevelPickerItem);
                 levelItem.transform.SetParent(LevelPickerContainer.transform, false);
                 var lItem = levelItem.GetComponent<LevelItem>();
-                lItem.b64 = levelB64;
-                LevelPickerItemInit(levelItem, levelB64, y, ln, isUnlocked);
+                lItem.b64 = row.B64;
+                LevelPickerItemInit(levelItem, row, y, ln, isUnlocked);
                 y -= 55;
 
                 ln++;
@@ -567,7 +608,7 @@ public class GameController : MonoBehaviour
 
     public void LoadRandomLevel()
     {
-        List<string> keyList = Levels.Classic.Keys.Where(Common.IsLevelUnlocked).ToList();
+        List<string> keyList = Levels.Names.Where(Common.IsLevelUnlocked).ToList();
         if (keyList.Count == 0)
             keyList.Add("first");
 
@@ -687,11 +728,11 @@ public class GameController : MonoBehaviour
             LoadLevel(KyeFile[levelName]);
             return;
         }
-        else if (Levels.Classic.ContainsKey(levelName))
+        else if (Levels.Contains(levelName))
         {
             KyeAnalytics.LevelStarted(this, levelName);
             CurrentLevelID = LevelNameToID(levelName);
-            LoadLevel(Levels.Classic[levelName]);
+            LoadLevel(Levels.GetB64(levelName));
             return;
         }
         else
@@ -699,7 +740,7 @@ public class GameController : MonoBehaviour
             KyeAnalytics.LevelStarted(this, "first");
             levelName = "first";
             CurrentLevelID = LevelNameToID(levelName);
-            LoadLevel(Levels.Classic[levelName]);
+            LoadLevel(Levels.GetB64(levelName));
             return;
         }
     }
@@ -715,7 +756,7 @@ public class GameController : MonoBehaviour
         }
 
         CurrentLevelID--;
-        CurrentLevelID = Mathf.Clamp(CurrentLevelID, 0, Levels.Classic.Count - 1);
+        CurrentLevelID = Mathf.Clamp(CurrentLevelID, 0, Levels.Count - 1);
         LoadLevel(CurrentLevelID);
     }
 
@@ -730,7 +771,7 @@ public class GameController : MonoBehaviour
         }
 
         CurrentLevelID++;
-        CurrentLevelID = Mathf.Clamp(CurrentLevelID, 0, Levels.Classic.Count - 1);
+        CurrentLevelID = Mathf.Clamp(CurrentLevelID, 0, Levels.Count - 1);
         LoadLevel(CurrentLevelID);
     }
 
@@ -744,31 +785,12 @@ public class GameController : MonoBehaviour
 
     private int LevelNameToID(string levelName)
     {
-        if(!Levels.Classic.ContainsKey(levelName))
-            return 0;
-        
-        int id = 0;
-        foreach(var level in Levels.Classic)
-        {
-            if(level.Key == levelName)
-                return id;
-            id++;
-        }
-
-        return 0;
+        return Mathf.Max(0, Levels.IndexOf(levelName));
     }
 
     private string LevelIDToName(int levelID)
     {
-        int id = 0;
-        foreach(var level in Levels.Classic)
-        {
-            if(id == levelID)
-                return level.Key;
-            id++;
-        }
-
-        return "";
+        return Levels.NameAt(levelID);
     }
 
     private void CountDiamonds()
@@ -794,7 +816,7 @@ public class GameController : MonoBehaviour
     {
         var attempt = LoadLevelInput.text.ToLower();
         
-        if(!Levels.Classic.ContainsKey(attempt))
+        if(!Levels.Contains(attempt))
         {
             LoadLevelInput.text = "";
             return;
@@ -999,12 +1021,6 @@ public class GameController : MonoBehaviour
             KyeAnalytics.LevelRestarted(this, CurrentLevelName);
             LoadLevel(_currentLevelB64);
             return;
-
-            string levelToLoad = _currentKyeLevelName;
-            if (string.IsNullOrEmpty(levelToLoad))
-                levelToLoad = AppController.Instance.settings.LastLevelPlayed;
-
-            LoadLevelWithNoR(levelToLoad);
         }
         catch(Exception ex)
         {
@@ -1316,11 +1332,9 @@ public class GameController : MonoBehaviour
 
         if (!levelEditor.IsPlaying && _currentLevelFilePath == "")
         {
-            Common.UpdateUnlockedLevel(CurrentLevelName);
-
             string key = CurrentLevelName.Trim().ToLower();
             var s = AppController.Instance.settings;
-            if (Levels.Classic.ContainsKey(key) && !s.GodMode && !s.UnlimitedLives)
+            if (Levels.Contains(key) && !s.GodMode && !s.UnlimitedLives)
                 s.SubmitLevelTime(key, _timeSinceLevelLoaded);
         }
 
