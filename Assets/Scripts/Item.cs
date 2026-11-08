@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 
 public class Item : MonoBehaviour
@@ -40,17 +38,14 @@ public class Item : MonoBehaviour
     public Enemy _enemy;
     private Timer _timer;
     public Sploder _sploder;
-    
-    public bool CanPassDoors => IsKye || (_enemy != null && _enemy.IsSmort);
 
-    public class ItemCollection
-    {
-        public List<Item> Items;
-    }
+    private bool _hasWork;
+    private bool _loggedError;
 
     public void Tick()
     {
-        if (!isActiveAndEnabled)
+        // Items with no behaviour and no sticking (walls, earth, diamonds, blocks) have nothing to do.
+        if (!_hasWork || !isActiveAndEnabled)
             return;
         
         if(IsStickable)
@@ -68,7 +63,11 @@ public class Item : MonoBehaviour
         }
         catch(Exception ex)
         {
-            Debug.Log(ex.ToString(), this);
+            if (!_loggedError)
+            {
+                _loggedError = true;
+                Debug.Log(ex.ToString(), this);
+            }
         }
 
         if(IsStickable)
@@ -101,6 +100,8 @@ public class Item : MonoBehaviour
         _enemy = GetComponent<Enemy>();
         _timer = GetComponent<Timer>();
         _sploder = GetComponent<Sploder>();
+
+        _hasWork = IsStickable || _goForward || _enemy || _auto || _blackhole || _timer || _sploder;
 
         Common.SetItem(transform.position.x, transform.position.y, this);
 

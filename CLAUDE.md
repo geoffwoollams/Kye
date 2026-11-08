@@ -49,11 +49,11 @@ Don't read, search or edit these. Leave them out of greps (for example `grep -r 
 ### Items
 - `Item.cs` is a bag of flags (`IsKye`, `IsPushable`, `KillsPlayer`, `IsDoor`, `IsStickerLR/UD`, `IsBlackhole`, `Roundness`, `Direction`, ...) plus optional behaviour components that it finds in `Awake`:
   - `GoForward`: sliders, rockies, bouncers. Moves in `Direction`; handles clockers, bouncing, rolling off round things.
-  - `Enemy`: monsters. `IsSmort` items can pass doors. `IsGuard` follows a wall.
+  - `Enemy`: monsters. `IsSmort` items can pass doors. `IsGuard` follows a wall on its right. At start it faces the best direction: a real wall (`Common.IsWall`) on its right with a free cell ahead, then a wall on its right, then any item on its right with a free cell ahead, then any item on its right, then a free cell ahead (ties go right, up, left, down). With nothing nearby it walks forward until it hits something or finds something on its right.
   - `Auto`: auto-slider/auto-rocky spawners. Rotates and spawns its `Prefab`.
   - `Blackhole`, `Timer` (counts down and replaces itself with `NextTimerPrefab`), `Sploder`
 - Stickers: `Common.PullToSticker` and `Common.StickersFollowKye`. Stuck items skip their `GoForward`/`Enemy` tick.
-- `Common` also maps between level characters, item names and prefabs. Adding an item type means updating **all four** maps (`GetPrefabFromItemChar`, `GetKyeCodeFromItem`, `GetItemNameFromKyeCode`, `ItemNameToNiceName`), adding a `GameController` prefab field and assigning it in the scene, and adding it to the level editor.
+- `Common` also maps between level characters, item names and prefabs. Adding an item type means adding one row to `Common.ItemDefs` (name, nice name, level character, prefab field), adding the `GameController` prefab field and assigning it in the scene, and adding it to the level editor. The four lookups (`GetPrefabFromItemChar`, `GetKyeCodeFromItem`, `GetItemNameFromKyeCode`, `ItemNameToNiceName`) are built from that table.
 - Wall codes follow the numpad and are flipped vertically: `wall1` ↔ `'7'`, `wall7` ↔ `'1'`, and so on. This is deliberate.
 
 ### Tick order
@@ -64,20 +64,20 @@ Don't read, search or edit these. Leave them out of greps (for example `grep -r 
 
 `Tick()` calls `Item.Tick()` on every item **in `Thinker` order**. `Thinker` is a creation counter assigned by `GameController.NewItem`. Level parsing runs from the bottom text row up, left to right, so items lower on the board think first. Spawned items get the next number, so they think last. Anything that creates an item at runtime should call `NewItem`. Items created without `NewItem` (the replacement timers from `Timer`) keep `Thinker` 0, so they think first. `Tick()` collects the items with `GetComponentsInChildren` into a reused list and stable-sorts it by `Thinker`, so ties keep scene order. Changing this order changes how levels play.
 
-`Item.Tick()` order: pull to sticker → `GoForward` / `Enemy` (unless stuck) → `Auto` → `Blackhole` → `Timer` → `Sploder` → pull to sticker again → re-check whether still stuck. Exceptions inside it are caught and logged, not thrown.
+`Item.Tick()` returns at once for items with no behaviour components that are not stickable (walls, earth, diamonds, blocks). Otherwise the order is: pull to sticker → `GoForward` / `Enemy` (unless stuck) → `Auto` → `Blackhole` → `Timer` → `Sploder` → pull to sticker again → re-check whether still stuck. Exceptions inside it are caught and logged, not thrown.
 
 There is no fixed timestep. Every component times itself against `Time.time`: `GoForward.Timer`, `Enemy.Speed`, `Auto.RotateSpeed`, a 2.5 s step for `Timer`, and Kye's 0.4 s first-move delay then 0.05 s repeat. `Tick()` runs every frame, but most items act only when their own timer expires. When a level is completed, `Time.timeScale` is set to 0.
 
 ### Level loader
 - **Level format**: a base64 string that decodes to text. Line 0 is the name, line 1 the hint, line 2 the completion message, and lines 3–22 are 20 rows of 30 characters each, using the codes from `Common`.
-- **Built-in levels**: `Levels.Classic` in `Levels.cs` maps a lowercase name to base64. **Dictionary order is the progression order** used for unlocking and next/previous (`Common.IsLevelUnlocked`, `GetNextLevelKey`, `UpdateUnlockedLevel`). Comments group the levels by the original `.kye` file they came from. `Levels.CheckForDuplicates` runs in the Editor.
+- **Built-in levels**: `Levels.Classic` in `Levels.cs` maps a lowercase name to base64. **Dictionary order is the progression order** used for unlocking and next/previous (`Common.IsLevelUnlocked`, `GetNextLevelKey`, `UpdateUnlockedLevel`). Comments group the levels by the original `.kye` file they came from. 24 `unknown N` levels with abnormal data (an extra header line) are commented out, and `marbles`, `start` and `end` are commented out with a `//todo` to examine them (non-wall items on the border). Players whose saved unlocked level is one of the removed levels get every level unlocked. `Levels.CheckForDuplicates` runs in the Editor.
 - **`.kye` files**: the first line is the level count, followed by 23-line blocks (`GameController.Get23`).
 - **K64**: the editor exports a level to the clipboard as `K64_<base64>_K64`.
 - Entry points on `GameController`: `LoadLevelWithNoR(name)`, `LoadLevelWithString(raw)`, `LoadLevelWithB64(b64)`, `LoadLevelWithKyeFile(path)`. All of them reach `LoadLevel(b64)` → `EraseLevel()` → `InsertLevel()`.
-- `InsertLevel` instantiates prefabs into `ItemContainer`. If the level has no Kye, it adds one at (3, 3).
+- `InsertLevel` instantiates prefabs into `ItemContainer`. If the level has no Kye, it adds one at (3, 3). Any non-empty item on the border (x 0 or 29, y 0 or 19) that is not a wall (codes `1`-`9`) becomes `wall5`.
 
 ### Saving and analytics
-- `SaveSystem` writes `settings.v3.json` to `Application.persistentDataPath` and migrates the older `settings.v1.dat` / `settings.v2.dat` files. `Save` skips the disk write when the settings JSON is unchanged since the last write.
+- `SaveSystem` writes `settings.v3.json` to `Application.persistentDataPath` and no longer reads the old `settings.v1.dat` / `settings.v2.dat` files (their migration code was removed). If the v3 file is corrupt it is copied to `.corrupt` and defaults are used. `Save` skips the disk write when the settings JSON is unchanged since the last write.
 - WebGL builds force `UnlockAllLevels`.
 - `KyeAnalytics` posts to `https://playkye.com/log.php`, in the Editor and WebGL only.
 

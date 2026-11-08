@@ -870,6 +870,14 @@ public class GameController : MonoBehaviour
                     string itemChar = lines[3 + y][x].ToString();
                     var itemPrefab = Common.GetPrefabFromItemChar(itemChar);
 
+                    // Every item on the border must be a wall; anything else becomes wall5.
+                    bool isBorder = x == 0 || x == 29 || y == 0 || y == 19;
+                    if(itemPrefab != null && isBorder && !Common.IsWallCode(itemChar))
+                    {
+                        itemChar = "5";
+                        itemPrefab = Common.GetPrefabFromItemChar(itemChar);
+                    }
+
                     if(itemPrefab != null)
                     {
                         var item = Instantiate(itemPrefab, new Vector3(x, 19 - y, 0), itemPrefab.transform.rotation);

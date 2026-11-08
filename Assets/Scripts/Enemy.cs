@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -19,7 +18,6 @@ public class Enemy : MonoBehaviour
     private float _rightSign = 1f;   // learned from Rot90 in Awake
 
     private Vector2 RightOf(Vector2 d)  { return _rightSign * new Vector2(-d.y, d.x); }
-    private Vector2 LeftOf(Vector2 d)   { return -RightOf(d); }
 
     private void GuardTurnRight() { Common.Rot90(ref _item, GuardRightIsAnticlockwise); }
     private void GuardTurnLeft()  { Common.Rot90(ref _item, !GuardRightIsAnticlockwise); }
@@ -56,26 +54,42 @@ public class Enemy : MonoBehaviour
         }
     }
     
+    private static readonly Vector2[] GuardStartDirections =
+    {
+        new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1)
+    };
+
+    // Picks the direction to start facing. Best to worst:
+    // a real wall on the right with a free cell ahead, a real wall on the right,
+    // any item on the right with a free cell ahead, any item on the right, a free cell ahead.
+    // Ties go to the first direction (right, up, left, down), so the choice is always the same.
+    // With nothing around, it walks forward until it hits something or finds something on its right.
     private Vector2 ChooseGuardStartDirection(Vector2 iPos)
     {
-        Vector2[] dirs = { new Vector2(1, 0), new Vector2(0, 1), new Vector2(-1, 0), new Vector2(0, -1) };
+        Vector2 best = GuardStartDirections[0];
+        int bestScore = -1;
 
-        Vector2 touchOnly = Vector2.zero, forwardOnly = Vector2.zero;
-        bool haveTouchOnly = false, haveForwardOnly = false;
-
-        foreach (Vector2 d in dirs)
+        foreach (Vector2 d in GuardStartDirections)
         {
-            bool touching = !Common.IsEmpty(iPos + RightOf(d));
+            Vector2 rightSpot = iPos + RightOf(d);
+            bool touching = !Common.IsEmpty(rightSpot);
+            // The border is always wall, but GetItem does not see it.
+            bool wall = touching && (!Common.InBounds(rightSpot) || Common.IsWall(Common.GetItem(rightSpot)));
             bool forwardEmpty = Common.IsEmpty(iPos + d);
 
-            if (touching && forwardEmpty) return d;
-            if (touching && !haveTouchOnly) { touchOnly = d; haveTouchOnly = true; }
-            if (forwardEmpty && !haveForwardOnly) { forwardOnly = d; haveForwardOnly = true; }
+            int score;
+            if (wall) score = forwardEmpty ? 5 : 4;
+            else if (touching) score = forwardEmpty ? 3 : 2;
+            else score = forwardEmpty ? 1 : 0;
+
+            if (score > bestScore)
+            {
+                best = d;
+                bestScore = score;
+            }
         }
 
-        if (haveTouchOnly) return touchOnly;
-        if (haveForwardOnly) return forwardOnly;
-        return dirs[0];
+        return best;
     }
 
     public void Tick()
@@ -197,7 +211,7 @@ public class Enemy : MonoBehaviour
 
         Enemy e = null;
         if(t != null)
-            e = t.GetComponent<Enemy>();
+            e = t._enemy;
         
         if(t == null)
             Common.MoveItemBy(direction, _item);
@@ -218,7 +232,6 @@ public class Enemy : MonoBehaviour
             FaceDirection(_item.Direction);
         
         _nextMove = Time.time + GoSpeed;
-        return;
     }
 
     private Vector2? FindSmartDirection()
@@ -233,6 +246,22 @@ public class Enemy : MonoBehaviour
         return direction;
     }
 
+    private const int GridWidth = 30;
+    private const int GridHeight = 20;
+
+    // Shared search buffers, so finding a path does not allocate.
+    private static readonly int[,] VisitedStamp = new int[GridWidth, GridHeight];
+    private static readonly Vector2Int[,] PreviousStep = new Vector2Int[GridWidth, GridHeight];
+    private static readonly Queue<Vector2Int> PathQueue = new Queue<Vector2Int>();
+    private static readonly Vector2Int[] PathDirections =
+    {
+        Vector2Int.up,
+        Vector2Int.down,
+        Vector2Int.left,
+        Vector2Int.right
+    };
+    private static int _searchStamp;
+
     private Vector2? FindPathDirection(bool allowObstacles)
     {
         int startX = _item.x;
@@ -243,29 +272,25 @@ public class Enemy : MonoBehaviour
         if (startX == targetX && startY == targetY)
             return null;
 
-        var visited = new bool[29, 19];
-        var prev = new Vector2Int[29, 19];
-
-        var queue = new Queue<Vector2Int>();
-        var start = new Vector2Int(startX, startY);
-        queue.Enqueue(start);
-        visited[startX, startY] = true;
-
-        Vector2Int[] directions =
+        if (_searchStamp == int.MaxValue)
         {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
-        };
+            System.Array.Clear(VisitedStamp, 0, VisitedStamp.Length);
+            _searchStamp = 0;
+        }
+        int stamp = ++_searchStamp;
+
+        PathQueue.Clear();
+        var start = new Vector2Int(startX, startY);
+        PathQueue.Enqueue(start);
+        VisitedStamp[startX, startY] = stamp;
 
         bool found = false;
 
-        while (queue.Count > 0 && !found)
+        while (PathQueue.Count > 0 && !found)
         {
-            var current = queue.Dequeue();
+            var current = PathQueue.Dequeue();
 
-            foreach (var dir in directions)
+            foreach (var dir in PathDirections)
             {
                 int nx = current.x + dir.x;
                 int ny = current.y + dir.y;
@@ -273,13 +298,13 @@ public class Enemy : MonoBehaviour
                 if (!Common.InBounds(nx, ny))
                     continue;
 
-                if (visited[nx, ny])
+                if (VisitedStamp[nx, ny] == stamp)
                     continue;
 
                 if (nx == targetX && ny == targetY)
                 {
-                    visited[nx, ny] = true;
-                    prev[nx, ny] = current;
+                    VisitedStamp[nx, ny] = stamp;
+                    PreviousStep[nx, ny] = current;
                     found = true;
                     break;
                 }
@@ -292,9 +317,9 @@ public class Enemy : MonoBehaviour
                 if (!walkable)
                     continue;
 
-                visited[nx, ny] = true;
-                prev[nx, ny] = current;
-                queue.Enqueue(new Vector2Int(nx, ny));
+                VisitedStamp[nx, ny] = stamp;
+                PreviousStep[nx, ny] = current;
+                PathQueue.Enqueue(new Vector2Int(nx, ny));
             }
         }
 
@@ -302,8 +327,8 @@ public class Enemy : MonoBehaviour
             return null;
 
         var step = new Vector2Int(targetX, targetY);
-        while (prev[step.x, step.y] != start)
-            step = prev[step.x, step.y];
+        while (PreviousStep[step.x, step.y] != start)
+            step = PreviousStep[step.x, step.y];
 
         return new Vector2(step.x - startX, step.y - startY);
     }
