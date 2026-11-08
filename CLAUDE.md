@@ -99,4 +99,4 @@ Other platform-specific code:
 
 
 ## Rules
-Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking.
+Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking. If you think it is needed, git commit before beginning a large change.
