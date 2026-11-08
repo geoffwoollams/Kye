@@ -387,6 +387,8 @@ public class LevelEditor : MonoBehaviour
 
     public void NewLevelClick()
     {
+#if !UNITY_WEBGL
+        // On WebGL the Open and Save buttons are hidden, so changes can't be saved and the warning is pointless
         var currentLevelB64 = Common.Base64Encode(GetLevel());
 
         if (currentLevelB64 != _loadedLevelB64)
@@ -394,6 +396,7 @@ public class LevelEditor : MonoBehaviour
             UnsavedChanges();
             return;
         }
+#endif
 
         NewLevel();
     }
@@ -567,6 +570,22 @@ public class LevelEditor : MonoBehaviour
         {
             HandleGridNavigationInput();
         }
+    }
+
+    private readonly InputFieldNavigator _fieldNavigator = new InputFieldNavigator();
+    private TMPro.TMP_InputField[] _textFields;
+
+    // A focused TMP input field swallows up/down, so the player could not leave the three
+    // level text fields. See InputFieldNavigator.
+    void LateUpdate()
+    {
+        if (!GameController.Instance.EditorPanel.activeSelf)
+            return;
+
+        if (_textFields == null)
+            _textFields = new[] { LevelName, LevelHint, LevelFinish };
+
+        _fieldNavigator.Tick(_textFields, InputFieldNavigator.Dir.Up, InputFieldNavigator.Dir.Down);
     }
 
     private bool IsTextFieldFocused()
@@ -745,8 +764,55 @@ public class LevelEditor : MonoBehaviour
         gameController.ShowMainMenu();
     }
 
+    // Menu buttons: top row is Return, Main menu, New, Play. File row is Open, Save, which
+    // OSAdjustments may hide (e.g. WebGL). Both are assigned in the scene.
+    public Button[] MenuTopRow, MenuFileRow;
+
+    // The scene wires navigation as if every button exists. Rewire it around hidden buttons
+    // so up/down never points at an inactive one.
+    private void UpdateMenuNavigation()
+    {
+        if (MenuTopRow == null || MenuFileRow == null || MenuTopRow.Length < 4 || MenuFileRow.Length < 2)
+            return;
+
+        Button open = MenuFileRow[0], save = MenuFileRow[1];
+        // activeSelf, not activeInHierarchy: the menu itself is still inactive when this runs
+        bool openOn = open.gameObject.activeSelf, saveOn = save.gameObject.activeSelf;
+
+
+        Selectable leftFile = openOn ? open : (saveOn ? save : null);
+        Selectable rightFile = saveOn ? save : (openOn ? open : null);
+
+        for (int i = 0; i < 4; i++)
+        {
+            var nav = MenuTopRow[i].navigation;
+            Selectable file = i < 2 ? leftFile : rightFile;
+            nav.selectOnDown = file != null ? file : LevelName;
+            MenuTopRow[i].navigation = nav;
+        }
+
+        if (openOn)
+        {
+            var nav = open.navigation;
+            nav.selectOnRight = saveOn ? save : null;
+            open.navigation = nav;
+        }
+
+        if (saveOn)
+        {
+            var nav = save.navigation;
+            nav.selectOnLeft = openOn ? open : null;
+            save.navigation = nav;
+        }
+
+        var nameNav = LevelName.navigation;
+        nameNav.selectOnUp = leftFile != null ? leftFile : MenuTopRow[1];
+        LevelName.navigation = nameNav;
+    }
+
     public void ShowMenu()
     {
+        UpdateMenuNavigation();
         EditorMenu.SetActive(true);
         Cursor.visible = true;
         IsInMenu = true;

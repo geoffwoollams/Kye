@@ -149,18 +149,11 @@ public static class Levels
 			dataToKeys[levelData].Add(level.Name);
 		}
 
-		bool found = false;
 		foreach (var kvp in dataToKeys)
 		{
 			if (kvp.Value.Count > 1)
-			{
-				found = true;
 				UnityEngine.Debug.LogWarning($"DUPLICATE level data: {string.Join(", ", kvp.Value)}");
-			}
 		}
-
-		if (!found)
-			UnityEngine.Debug.Log("No duplicate levels found.");
 	}
 
 	private static readonly Level[] All =

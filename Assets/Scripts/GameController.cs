@@ -137,7 +137,7 @@ public class GameController : MonoBehaviour
 
         UpdateUI();
         
-#if UNITY_EDITOR 
+#if UNITY_EDITOR && false
         LoadLevelWithString(
             "DEV\r\n" +
             "Testing\r\n" + 
@@ -518,6 +518,10 @@ public class GameController : MonoBehaviour
 
     public void ShowMainMenu()
     {
+#if UNITY_EDITOR
+        DevBot.NotifyMainMenu();
+        DevPanel.Hide();
+#endif
         levelEditor.IsPlaying = false;
         ItemContainer.gameObject.SetActive(true);
 
@@ -549,6 +553,9 @@ public class GameController : MonoBehaviour
 
     public void HideMainMenu()
     {
+#if UNITY_EDITOR
+        DevPanel.Hide();
+#endif
         GamePanel.SetActive(false);
         PauseMenu.SetActive(false);
         MainMenu.SetActive(false);
@@ -750,7 +757,6 @@ public class GameController : MonoBehaviour
                 var lName = GetLevelName(b64);
                 if (LoadKyeFile.ContainsKey(lName))
                 {
-                    Debug.Log("Existing Key: " + lName);
                     lName = lName + "_" + UnityEngine.Random.Range(1000, 9999);
                 }
                 LoadKyeFile.Add(lName.ToLower(), b64);
@@ -883,6 +889,9 @@ public class GameController : MonoBehaviour
 
     private void LoadLevel(string level)
     {
+#if UNITY_EDITOR
+        DevBot.NotifyLevelLoading();
+#endif
         try
         {
             _currentLevelFilePath = "";
@@ -981,7 +990,6 @@ public class GameController : MonoBehaviour
             var three = Common.GetItem(3, 3);
             if(three != null)
             {
-                Debug.Log("Item at 3x3: " + three.name);
                 Common.DestroyItem(three, false);
             }
 
@@ -990,7 +998,6 @@ public class GameController : MonoBehaviour
             NewItem(item.GetComponent<Item>());
             Kye = item.GetComponent<Item>();
             StartPoint = item.transform.position;
-            Debug.Log(Kye);
         }
         
         Time.timeScale = 1;
@@ -1211,6 +1218,11 @@ public class GameController : MonoBehaviour
                 StepToClickPosition();
         }
 
+#if UNITY_EDITOR
+        if (DevBot.Active)
+            inputManager.SetXY(DevBot.Instance.NextInput());
+#endif
+
         var input = inputManager.Get101();
         
         TrackInputChange(input);
@@ -1229,6 +1241,22 @@ public class GameController : MonoBehaviour
 
         _input.x = moveX;
         _input.y = moveY;
+    }
+
+    private readonly InputFieldNavigator _searchNavigator = new InputFieldNavigator();
+    private TMP_InputField[] _searchFields;
+
+    // The focused search field swallows left/down, so force the move to its navigation target.
+    // See InputFieldNavigator.
+    void LateUpdate()
+    {
+        if (!LevelPickerPanel.activeSelf)
+            return;
+
+        if (_searchFields == null)
+            _searchFields = new[] { LoadLevelInput };
+
+        _searchNavigator.Tick(_searchFields, InputFieldNavigator.Dir.Left, InputFieldNavigator.Dir.Down);
     }
 
     void Update()
@@ -1381,7 +1409,11 @@ public class GameController : MonoBehaviour
         
         _canStartMoving = false;
 
-        if (!levelEditor.IsPlaying && _currentLevelFilePath == "")
+        bool devBot = false;
+#if UNITY_EDITOR
+        devBot = DevBot.Active; // the Dev bot never records best times
+#endif
+        if (!levelEditor.IsPlaying && _currentLevelFilePath == "" && !devBot)
         {
             string key = CurrentLevelName.Trim().ToLower();
             var s = AppController.Instance.settings;

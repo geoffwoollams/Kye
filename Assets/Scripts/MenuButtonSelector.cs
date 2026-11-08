@@ -33,8 +33,6 @@ public class MenuButtonSelector : MonoBehaviour, IPointerEnterHandler, ISelectHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Debug.Log(eventData.pointerEnter.name);
-        
         if(button && !button.interactable)
             return;
 

@@ -44,9 +44,10 @@ public class EditorGridItem : MonoBehaviour, IPointerEnterHandler
         transform.SetAsLastSibling();
         _rect.localScale = Vector3.one * 1.2f;
         
-        GameController.Instance.LevelEditorGridItemOutline.parent = transform;
-        GameController.Instance.LevelEditorGridItemOutline.localPosition = Vector3.zero;
-        GameController.Instance.LevelEditorGridItemOutline.localScale = Vector3.one;
+        var outline = GameController.Instance.LevelEditorGridItemOutline;
+        outline.SetParent(transform, false);
+        outline.localPosition = Vector3.zero;
+        outline.localScale = Vector3.one;
 
         _editor._hoveredGridItem = this;
 

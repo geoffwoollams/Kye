@@ -3,8 +3,8 @@ using UnityEngine;
 public class SmoothMover : MonoBehaviour
 {
     private Transform visual;
-    private float speed = 18f;          // cells per second
-    private float snapDistance = 2f;  // bigger jumps snap instead of sliding
+    private float speed = 14f;          // cells per second
+    private float snapDistance = 2.6f;  // bigger jumps snap instead of sliding
 
     private Vector3 _visualPos;        // where the sprite is, tracked by us
     private bool _first = true;
