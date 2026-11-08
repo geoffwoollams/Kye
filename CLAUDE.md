@@ -17,12 +17,27 @@ Assets/
   Prefabs/            Game, Border, LevelItem, HelpItem, EditorGridItem, kyeGhost, SplodeEffect
   Prefabs/Items/      One prefab per item type (kye, diamond, walls, sliders, monsters, ...)
   Scenes/Game.unity   The only scene
+  Editor/BuildScript.cs   Command line build entry point used by build.sh
   Sprites/ Materials/ Models/ Sounds/ Fonts/   Game assets
   Settings/Build Profiles/   Unity build profiles
   URP*, URPDefaultResources/, UniversalRenderPipelineGlobalSettings.asset   Render pipeline config
   _Recovery/          Unity scene-recovery output, not real content
-Export/<Platform>/    Build output (gitignored)
+Export/<Platform>/    Build output (gitignored); Export/Packages/ holds the release packages
+Stuff/                Non-Unity code: release tooling, not part of the game
+  Launcher/           Kye auto-updater (C#, net48) and the NSIS script for Kye-Setup.exe
+  appimage/           AppDir and appimagetool for the Linux AppImage
+build.sh              Builds and packages every platform (see Building)
 ```
+
+## Building
+
+`./build.sh [linux windows mac android web]` (default: all five) runs Unity in batch mode once per platform through `BuildScript.Build`, then packages. A full build deletes `Export/` first; a partial build only clears the folders it rebuilds. Unity logs go to `Export/logs/`. The editor binary comes from `ProjectVersion.txt` (override with `UNITY=`), and the version from `bundleVersion`. The Unity editor must not have the project open.
+
+Packages land in `Export/Packages/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `.apk`, plus `Kye-Setup.exe`. The Web build stays in `Export/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
+
+- **Windows**: the zip has the game files at its root (the Launcher extracts it straight into its `app` folder). `Stuff/Launcher/nsis/app` is emptied and replaced with the Windows build, then `Stuff/Launcher/build.sh` produces `Kye-Setup.exe`.
+- **Linux AppImage**: `Stuff/appimage/AppDir/usr/bin` is emptied and replaced with the Linux build, then `ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir Kye-<version>.AppImage`.
+- **Android**: builds an `.apk`, not an `.aab`.
 
 ## Third-party folders: never read or edit
 
@@ -103,4 +118,4 @@ Other platform-specific code:
 
 
 ## Rules
-Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking. If you think it is needed, git commit before beginning a large change. If you are changing something mentioned in CLAUDE.md, suggest relevant changes.
+Before changing any rules or movement code, or any project setting, state the reason and the evidence, and ask me if the change could alter gameplay. Label each finding as bug, performance, dead code, or possible intentional quirk, and apply only the performance and dead-code changes without asking. If you think it is needed, suggest a git commit. If you are changing something mentioned in CLAUDE.md, or which should be, suggest relevant changes.

@@ -136,3 +136,15 @@ crashlytics-build.properties
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Release build output and packaging intermediates (see build.sh)
+/Stuff/appimage/AppDir/usr/bin/
+/Stuff/appimage/appimagetool-x86_64.AppImage
+/Stuff/appimage/*.AppImage
+/Stuff/Launcher/nsis/app/
+/Stuff/Launcher/nsis/Kye-Setup.exe
+/Stuff/Launcher/nsis/Launcher.exe
+/Stuff/Launcher/nsis/app.ico
+/Stuff/Launcher/src/app.ico
+/Stuff/Launcher/src/bin/
+/Stuff/Launcher/src/obj/
