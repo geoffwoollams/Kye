@@ -1,4 +1,5 @@
 #!/bin/bash
+# PORTMASTER: kye.zip, Kye.sh
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
@@ -37,6 +38,7 @@ cat /sys/devices/system/cpu/possible > "$GAMEDIR/support_files/cpu_possible.txt"
 chmod a+x "$GAMEDIR/unityloader"
 pm_platform_helper "$GAMEDIR/unityloader"
 
-"$GAMEDIR/unityloader" kye.toml
+# "$GAMEDIR/unityloader" kye.toml
+stdbuf -oL -eL "$GAMEDIR/unityloader" kye.toml > "$PWD/run.txt" 2>&1
 
 pm_finish

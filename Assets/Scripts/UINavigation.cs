@@ -67,6 +67,8 @@ public class UINavigation : MonoBehaviour
                     GameController.Instance.PauseToggle();
                 if (Gamepad.current.bButton.wasPressedThisFrame)
                     GameController.Instance.PauseToggle();
+                if (Gamepad.current.yButton.wasPressedThisFrame)
+                    GameController.Instance.RestartLevel();
             }
         }
         

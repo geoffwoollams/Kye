@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
@@ -55,7 +56,25 @@ public static class BuildScript
             options = BuildOptions.None,
         };
 
-        BuildReport report = BuildPipeline.BuildPlayer(options);
+        // Windows and Mac build with CoreCLR; IL2CPP can't build them. Linux, Android and WebGL keep the project setting.
+        // Windows, Mac and Linux share the Standalone group, so override it for this run only and restore it afterwards.
+        bool useCoreClr = target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneOSX;
+        var buildTarget = NamedBuildTarget.Standalone;
+        var previousBackend = PlayerSettings.GetScriptingBackend(buildTarget);
+        if (useCoreClr)
+            PlayerSettings.SetScriptingBackend(buildTarget, ScriptingImplementation.CoreCLR);
+
+        BuildReport report;
+        try
+        {
+            report = BuildPipeline.BuildPlayer(options);
+        }
+        finally
+        {
+            if (useCoreClr)
+                PlayerSettings.SetScriptingBackend(buildTarget, previousBackend);
+        }
+
         if (report.summary.result != BuildResult.Succeeded)
             Fail($"Build of {target} finished with result {report.summary.result} ({report.summary.totalErrors} errors)");
 

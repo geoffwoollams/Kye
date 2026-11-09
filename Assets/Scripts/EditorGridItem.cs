@@ -10,6 +10,7 @@ public class EditorGridItem : MonoBehaviour, IPointerEnterHandler
     public LevelEditor _editor;
     public RectTransform _rect;
     public Image _image;
+    Image _background;
     public Sprite _setSprite;
     public string _setItem;
 
@@ -19,6 +20,24 @@ public class EditorGridItem : MonoBehaviour, IPointerEnterHandler
     void Awake()
     {
         _rect = GetComponent<RectTransform>();
+
+        // Item sprites have transparent pixels. Keep the root image as a white background
+        // and draw the item on a child image so the panel colour never shows through.
+        _background = _image;
+        var child = new GameObject("Item", typeof(RectTransform), typeof(Image));
+        var childRect = (RectTransform)child.transform;
+        childRect.SetParent(transform, false);
+        childRect.anchorMin = Vector2.zero;
+        childRect.anchorMax = Vector2.one;
+        childRect.offsetMin = childRect.offsetMax = Vector2.zero;
+        _image = child.GetComponent<Image>();
+        _image.raycastTarget = false;
+        _image.preserveAspect = _background.preserveAspect;
+    }
+
+    public void SetBackground(Sprite sprite)
+    {
+        _background.sprite = sprite;
     }
 
     void Start()

@@ -9,7 +9,7 @@ public class OSAdjustments : MonoBehaviour
     
     void Start()
     {
-#if UNITY_WEBGL || UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+#if UNITY_WEBGL || UNITY_IOS || UNITY_EDITOR
         // If we are on mobile/web, hide the exit button and move the help and settings buttons to the right
         ExitButton.SetActive(false);
         
@@ -22,6 +22,14 @@ public class OSAdjustments : MonoBehaviour
         Navigation levelsNav = LevelsButton.navigation;
         levelsNav.selectOnDown = SettingsButton.GetComponent<Button>();
         LevelsButton.navigation = levelsNav;
+#else
+        // The scene wires Settings' right neighbour to the Editor-only Dev button, which is destroyed outside
+        // the Editor. Point it at the Exit button instead.
+        var exitButton = ExitButton.GetComponent<Button>();
+        var settingsButton = SettingsButton.GetComponent<Button>();
+        Navigation settingsNav = settingsButton.navigation;
+        settingsNav.selectOnRight = exitButton;
+        settingsButton.navigation = settingsNav;
 #endif
 
 #if UNITY_WEBGL

@@ -478,6 +478,7 @@ public class LevelEditor : MonoBehaviour
                     item.transform.SetParent(editorGridContainer);
                     item.name = "EditorGridItem (" + x + "x" + y + ")";
                     item._editor = this;
+                    item.SetBackground(gridBackgroundSprite);
                     item.x = x;
                     item.y = y;
                     GridItems.Add(item);

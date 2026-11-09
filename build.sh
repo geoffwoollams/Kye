@@ -4,15 +4,18 @@
 # Usage: ./build.sh [platform ...]     platforms: linux windows mac android web (default: all)
 # Env:   UNITY=/path/to/Unity          override the Unity editor binary
 #
-# Packages (all in Export/Packages/<version>/):
+# Everything for a version goes in Export/<version>/ (other versions are left alone):
+#   Linux/ Windows/ Mac/ Android/ Web/   the Unity builds, with their debug info
+#   logs/                                Unity build logs
+#   Packages/                            the release packages:
 #   Kye-<version>.tar.gz     Linux
 #   Kye-<version>.AppImage   Linux, built from Stuff/appimage
 #   Kye-<version>.zip        Windows (game files at the zip root, as the Launcher auto-updater expects)
 #   Kye-Setup.exe            Windows installer, built from Stuff/Launcher
 #   Kye-<version>-macOS.zip  macOS (contains Kye.app)
 #   Kye-<version>.apk        Android
-#   kye.zip                  PortMaster port (Kye.sh + kye/), built from Stuff/portmaster/unityloader
-# Export/Web/ holds the WebGL build (not packaged).
+#   kye-portmaster.zip       PortMaster port (Kye.sh + kye/), built from Stuff/portmaster/unityloader
+# The Web build is not packaged.
 #
 # Unity's "*_BackUpThisFolder_ButDontShipItWithYourGame" and "*_BurstDebugInformation_DoNotShip"
 # folders are left in the platform folders but are excluded from every package and the installer.
@@ -23,8 +26,8 @@ ROOT=$PWD
 UNITY=${UNITY:-$HOME/Unity/Hub/Editor/$(sed -n 's/^m_EditorVersion: //p' ProjectSettings/ProjectVersion.txt)/Editor/Unity}
 VERSION=$(sed -n 's/^  bundleVersion: //p' ProjectSettings/ProjectSettings.asset | head -n1 | tr -d '\r')
 NAME="Kye-$VERSION"
-EXPORT=$ROOT/Export
-PKG=$EXPORT/Packages/$VERSION
+EXPORT=$ROOT/Export/$VERSION   # everything for this version; other versions are never touched
+PKG=$EXPORT/Packages
 LOGS=$EXPORT/logs
 EXCLUDES=('*_BackUpThisFolder_ButDontShipItWithYourGame' '*_BurstDebugInformation_DoNotShip')
 
@@ -36,7 +39,7 @@ PLATFORMS=("$@")
 
 echo "Building $NAME with $UNITY"
 if [ ${#PLATFORMS[@]} -eq 5 ]; then
-  # Full build: clear the whole export folder. Partial builds only clear their own folders.
+  # Full build: clear this version's export folder. Partial builds only clear their own folders.
   rm -rf "$EXPORT"
 fi
 mkdir -p "$LOGS" "$PKG"
@@ -51,7 +54,7 @@ unity_build() {
   local target=$1 dir=$2; shift 2
   rm -rf "$EXPORT/$dir"
   local t0=$SECONDS
-  echo "=== Unity: $target -> Export/$dir"
+  echo "=== Unity: $target -> Export/$VERSION/$dir"
   "$UNITY" -batchmode -nographics -quit -projectPath "$ROOT" \
     -buildTarget "$target" -executeMethod BuildScript.Build \
     -exportPath "$EXPORT/$dir" -logFile "$LOGS/$dir.log" "$@" \
@@ -98,7 +101,7 @@ for p in "${PLATFORMS[@]}"; do
       ;;
     android)
       unity_build Android Android -apkName "$NAME"
-      mv "$EXPORT/Android/$NAME.apk" "$PKG/"
+      cp "$EXPORT/Android/$NAME.apk" "$PKG/"
       # PortMaster: unpack the apk's lib/ and assets/bin/Data/ into the unityloader port, then zip it
       PM=$ROOT/Stuff/portmaster/unityloader
       sed -i "s/^versionName=.*/versionName=\"$VERSION\"/" "$PM/kye/kye.toml"
@@ -107,8 +110,8 @@ for p in "${PLATFORMS[@]}"; do
       cp -a "$APK/lib/." "$PM/kye/gamedata/lib/"
       rm -rf "$PM/kye/gamedata/assets/bin/Data"
       cp -a "$APK/assets/bin/Data" "$PM/kye/gamedata/assets/bin/Data"
-      rm -rf "$APK" "$PKG/kye.zip"
-      (cd "$PM" && zip -qry "$PKG/kye.zip" Kye.sh kye)
+      rm -rf "$APK" "$PKG/kye-portmaster.zip"
+      (cd "$PM" && zip -qry "$PKG/kye-portmaster.zip" Kye.sh kye)
       ;;
     web)
       unity_build WebGL Web

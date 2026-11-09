@@ -22,7 +22,7 @@ Assets/
   Settings/Build Profiles/   Unity build profiles
   URP*, URPDefaultResources/, UniversalRenderPipelineGlobalSettings.asset   Render pipeline config
   _Recovery/          Unity scene-recovery output, not real content
-Export/<Platform>/    Build output (gitignored); Export/Packages/<version>/ holds the release packages
+Export/<version>/     Build output (gitignored): <Platform>/ builds, logs/ and Packages/ (the release packages)
 Stuff/                Non-Unity code: release tooling, not part of the game
   Launcher/           Kye auto-updater (C#, net48) and the NSIS script for Kye-Setup.exe
   appimage/           AppDir and appimagetool for the Linux AppImage
@@ -32,14 +32,14 @@ build.sh              Builds and packages every platform (see Building)
 
 ## Building
 
-`./build.sh [linux windows mac android web]` (default: all five) runs Unity in batch mode once per platform through `BuildScript.Build`, then packages. A full build deletes `Export/` first; a partial build only clears the folders it rebuilds. Unity logs go to `Export/logs/`. The script ends with a stats table (Unity time, packaging time and total per platform, plus package sizes). The editor binary comes from `ProjectVersion.txt` (override with `UNITY=`), and the version from `bundleVersion`. The Unity editor must not have the project open.
+`./build.sh [linux windows mac android web]` (default: all five) runs Unity in batch mode once per platform through `BuildScript.Build`, then packages. Everything goes in `Export/<version>/` (`Linux/`, `Windows/`, `Mac/`, `Android/`, `Web/`, `logs/`, `Packages/`), so older versions stay available with their debug info and logs. A full build deletes only that version's folder first; a partial build only clears the platform folders it rebuilds. The script ends with a stats table (Unity time, packaging time and total per platform, plus package sizes). The editor binary comes from `ProjectVersion.txt` (override with `UNITY=`), and the version from `bundleVersion`. The Unity editor must not have the project open.
 
-Packages land in `Export/Packages/<version>/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `.apk`, `kye.zip` (PortMaster), plus `Kye-Setup.exe`. The Web build stays in `Export/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
+Packages land in `Export/<version>/Packages/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `.apk`, `kye-portmaster.zip` (PortMaster), plus `Kye-Setup.exe`. The Web build stays in `Export/<version>/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
 
 - **Windows**: the zip has the game files at its root (the Launcher extracts it straight into its `app` folder). `Stuff/Launcher/nsis/app` is emptied and replaced with the Windows build, then `Stuff/Launcher/build.sh` produces `Kye-Setup.exe`.
 - **Linux AppImage**: `Stuff/appimage/AppDir/usr/bin` is emptied and replaced with the Linux build, then `ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir Kye-<version>.AppImage`.
 - **Android**: builds an `.apk`, not an `.aab`.
-- **PortMaster**: after the apk, its `lib/*` is copied over `Stuff/portmaster/unityloader/kye/gamedata/lib/`, and `assets/bin/Data/` replaces (the target is emptied first) `kye/gamedata/assets/bin/Data/`. `versionName` in `kye/kye.toml` is set to the current version. `Kye.sh` and `kye/` are then zipped to `Export/Packages/<version>/kye.zip`.
+- **PortMaster**: after the apk, its `lib/*` is copied over `Stuff/portmaster/unityloader/kye/gamedata/lib/`, and `assets/bin/Data/` replaces (the target is emptied first) `kye/gamedata/assets/bin/Data/`. `versionName` in `kye/kye.toml` is set to the current version. `Kye.sh` and `kye/` are then zipped to `Export/<version>/Packages/kye-portmaster.zip`.
 
 ## Third-party folders: never read or edit
 
@@ -101,7 +101,7 @@ There is no fixed timestep. Every component times itself against `Time.time`: `G
 
 ## Platform-specific UI: check `OSAdjustments.cs` for any menu change
 
-`OSAdjustments.cs` (on the main menu in `Game.unity`) changes the menu at runtime under `#if UNITY_WEBGL || UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR`:
+`OSAdjustments.cs` (on the main menu in `Game.unity`) changes the menu at runtime. Android and desktop keep the Exit button and instead rewire Settings' `selectOnRight` to Exit (the scene points it at the Editor-only Dev button, which is destroyed outside the Editor). Under `#if UNITY_WEBGL || UNITY_IOS || UNITY_EDITOR`:
 - it **removes** the Exit button (`SetActive(false)`),
 - it **moves** the Help and Settings buttons 50 px to the right,
 - it **rewires** the Levels button's `selectOnDown` to Settings, for controller and keyboard navigation.

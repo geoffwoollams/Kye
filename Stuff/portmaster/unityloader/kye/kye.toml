@@ -1,8 +1,6 @@
 [paths]
-
 game_files="./gamedata/"
 support_files="./gamedata/"
-
 android_package_code="./"
 android_external_files="../conf/"
 android_files="../conf/"
@@ -10,19 +8,16 @@ android_cache="../cache/"
 android_obb_dirs=["./gamedata/"]
 android_source_dirs=["./gamedata/"]
 
-
 [package]
-
 packageName="com.GeoffWoollams.Kye"
 versionName="3.1.0014a"
 mainIntentBundle = { unity = "" }
 
-
 [device]
-
 displayWidth=640
 displayHeight=480
 displayRotation=0
+splash = "splash.bmp"
 
 [input]
 controller=true
