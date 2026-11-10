@@ -635,6 +635,10 @@ public class GameController : MonoBehaviour
 
     public void PauseToggle()
     {
+        // Never open the pause menu over the level complete / failed screens
+        if (LevelComplete.activeSelf || LevelFailed.activeSelf)
+            return;
+
         PauseMenu.SetActive(!PauseMenu.activeSelf);
         Time.timeScale = PauseMenu.activeSelf ? 0 : 1;
 

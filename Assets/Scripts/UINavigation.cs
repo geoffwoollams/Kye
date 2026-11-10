@@ -47,6 +47,10 @@ public class UINavigation : MonoBehaviour
 
         else if (GameController.Instance.GamePanel.activeSelf && !GameController.Instance.MainMenu.activeSelf)
         {
+            // No pause/restart/next/previous shortcuts on the level complete / failed screens
+            if (GameController.Instance.LevelComplete.activeSelf || GameController.Instance.LevelFailed.activeSelf)
+                return;
+
             if (Keyboard.current != null)
             {
                 if (Keyboard.current.escapeKey.wasPressedThisFrame)
