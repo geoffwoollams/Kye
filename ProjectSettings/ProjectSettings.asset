@@ -99,7 +99,7 @@ PlayerSettings:
   androidFullscreenMode: 1
   androidAutoRotationBehavior: 1
   androidPredictiveBackSupport: 0
-  androidApplicationEntry: 1
+  androidApplicationEntry: 2
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
   runInBackground: 1
@@ -164,7 +164,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 3.1.0014a
+  bundleVersion: 3.1.0014
   preloadedAssets:
   - {fileID: 11400000, guid: bdf2855e5dd2f8ba4a2a42d3b9bb03dd, type: 2}
   - {fileID: 11400000, guid: 3f5b5dff67a942289a9defa416b206f3, type: 2}

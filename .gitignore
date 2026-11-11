@@ -151,5 +151,12 @@ crashlytics-build.properties
 
 /Stuff/portmaster/unityloader/kye/gamedata/lib/
 /Stuff/portmaster/unityloader/kye/gamedata/assets/bin/Data/
+/Stuff/portmaster/unityloader/kye/gamedata/base.apk
+/Stuff/portmaster/unityloader/kye/gamedata/usr/
 /Stuff/portmaster/unityloader-u6.0/kye/gamedata/lib/
 /Stuff/portmaster/unityloader-u6.0/kye/gamedata/assets/bin/Data/
+
+# IDE settings
+/.idea/
+/.vscode/
+/.junie/

@@ -1,7 +1,8 @@
 #!/bin/bash
-# Builds Kye for Linux, Windows, macOS, Android and Web with Unity, then packages them.
+# Builds Kye for Linux, Windows, macOS, Android and Web with Unity, then packages them,
+# plus a zip of the source code and build tools.
 #
-# Usage: ./build.sh [platform ...]     platforms: linux windows mac android web (default: all)
+# Usage: ./build.sh [platform ...]     platforms: linux windows mac android web source (default: all)
 # Env:   UNITY=/path/to/Unity          override the Unity editor binary
 #
 # Everything for a version goes in Export/<version>/ (other versions are left alone):
@@ -15,7 +16,11 @@
 #   Kye-<version>-macOS.zip  macOS (contains Kye.app)
 #   Kye-<version>.apk        Android
 #   kye-portmaster.zip       PortMaster port (Kye.sh + kye/), built from Stuff/portmaster/unityloader
-# The Web build is not packaged.
+#   Kye-<version>-web.zip    Web (the WebGL build files at the zip root)
+#   Kye-<version>-source.zip Source code and build tools, inside a Kye-<version>-source/ folder. Built from git's
+#                            file list (tracked + untracked, minus .gitignore) so it includes uncommitted changes.
+#                            Also left out: generated/binary build inputs (see the source case below).
+#                            Needs no Unity build; runs last so it matches the builds made in the same run.
 #
 # Unity's "*_BackUpThisFolder_ButDontShipItWithYourGame" and "*_BurstDebugInformation_DoNotShip"
 # folders are left in the platform folders but are excluded from every package and the installer.
@@ -31,14 +36,18 @@ PKG=$EXPORT/Packages
 LOGS=$EXPORT/logs
 EXCLUDES=('*_BackUpThisFolder_ButDontShipItWithYourGame' '*_BurstDebugInformation_DoNotShip')
 
-[ -x "$UNITY" ] || { echo "Unity not found at $UNITY (set UNITY=...)" >&2; exit 1; }
+ALL_PLATFORMS=(linux windows mac android web source)
+PLATFORMS=("$@")
+[ ${#PLATFORMS[@]} -gt 0 ] || PLATFORMS=("${ALL_PLATFORMS[@]}")
+
+# Unity is only needed when something other than the source zip is built.
+if [ "${PLATFORMS[*]}" != "source" ]; then
+  [ -x "$UNITY" ] || { echo "Unity not found at $UNITY (set UNITY=...)" >&2; exit 1; }
+fi
 [ -n "$VERSION" ] || { echo "Could not read bundleVersion" >&2; exit 1; }
 
-PLATFORMS=("$@")
-[ ${#PLATFORMS[@]} -gt 0 ] || PLATFORMS=(linux windows mac android web)
-
 echo "Building $NAME with $UNITY"
-if [ ${#PLATFORMS[@]} -eq 5 ]; then
+if [ ${#PLATFORMS[@]} -eq ${#ALL_PLATFORMS[@]} ]; then
   # Full build: clear this version's export folder. Partial builds only clear their own folders.
   rm -rf "$EXPORT"
 fi
@@ -102,19 +111,48 @@ for p in "${PLATFORMS[@]}"; do
     android)
       unity_build Android Android -apkName "$NAME"
       cp "$EXPORT/Android/$NAME.apk" "$PKG/"
-      # PortMaster: unpack the apk's lib/ and assets/bin/Data/ into the unityloader port, then zip it
+      # PortMaster: the unedited APK is the game. unityloader reads the game data from
+      # it and extracts the native libraries on first run, so only what the APK lacks goes next to it.
       PM=$ROOT/Stuff/portmaster/unityloader
-      sed -i "s/^versionName=.*/versionName=\"$VERSION\"/" "$PM/kye/kye.toml"
-      APK=$(mktemp -d); unzip -q "$PKG/$NAME.apk" 'lib/*' 'assets/bin/Data/*' -d "$APK"
-      mkdir -p "$PM/kye/gamedata/lib" "$PM/kye/gamedata/assets/bin"
-      cp -a "$APK/lib/." "$PM/kye/gamedata/lib/"
-      rm -rf "$PM/kye/gamedata/assets/bin/Data"
-      cp -a "$APK/assets/bin/Data" "$PM/kye/gamedata/assets/bin/Data"
-      rm -rf "$APK" "$PKG/kye-portmaster.zip"
-      (cd "$PM" && zip -qry "$PKG/kye-portmaster.zip" Kye.sh kye)
+      GD=$PM/kye/gamedata
+      rm -rf "$GD/assets" "$GD/lib"      # nothing extracted from older builds may be left behind
+      mkdir -p "$GD/lib/arm64-v8a"
+      cp "$PKG/$NAME.apk" "$GD/base.apk"
+      # libc++_shared.so isn't in a Unity APK: take it from this Unity editor's NDK (stripped to save space)
+      NDK=$(dirname "$UNITY")/Data/PlaybackEngines/AndroidPlayer/NDK/toolchains/llvm/prebuilt/linux-x86_64
+      [ -f "$NDK/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" ] \
+        || { echo "libc++_shared.so not found in the Unity NDK ($NDK)" >&2; exit 1; }
+      cp "$NDK/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" "$GD/lib/arm64-v8a/"
+      "$NDK/bin/llvm-strip" --strip-unneeded "$GD/lib/arm64-v8a/libc++_shared.so"
+      # Unity reads time zones from an Android-format tzdata file: build it from this machine's zoneinfo
+      python3 "$ROOT/Stuff/portmaster/make_android_tzdata.py" "$GD/usr/share/zoneinfo/tzdata"
+      rm -f "$PKG/kye-portmaster.zip"
+      # -n .apk: store the APK as it is (it's already compressed)
+      (cd "$PM" && zip -qry -n .apk "$PKG/kye-portmaster.zip" Kye.sh kye)
       ;;
     web)
       unity_build WebGL Web
+      # zip the web build contents at the zip root (leave out Unity's debug-only folders)
+      rm -f "$PKG/$NAME-web.zip"
+      (cd "$EXPORT/Web" && zip -qry "$PKG/$NAME-web.zip" . -x "*_BackUpThisFolder_ButDontShipItWithYourGame*" "*_BurstDebugInformation_DoNotShip*")
+      ;;
+    source)
+      # File list = git's tracked + untracked files minus .gitignore, so uncommitted changes are included.
+      # (.gitignore already leaves out Library, Export, *.apk, the generated csproj/sln, etc.)
+      # Then drop what the build regenerates or what is a large binary input. libc++_shared.so is
+      # .gitignored but is wanted, so it is added back. Third-party folders and unityloader stay in.
+      SRC=$(mktemp -d); list=$SRC/files; GD=Stuff/portmaster/unityloader/kye/gamedata
+      git ls-files -z --cached --others --exclude-standard | sort -zu \
+        | grep -zvE "^(Export/|Stuff/appimage/AppDir/usr/bin/|Stuff/Launcher/nsis/app/|$GD/(lib/|assets/))|(^|/)appimagetool-x86_64\.AppImage$|\.apk$" > "$list.raw"
+      [ -f "$GD/lib/arm64-v8a/libc++_shared.so" ] && printf '%s\0' "$GD/lib/arm64-v8a/libc++_shared.so" >> "$list.raw"
+      # git still lists files deleted in the working tree: keep only what exists, under the wrapper folder
+      while IFS= read -r -d '' f; do
+        { [ -e "$f" ] || [ -L "$f" ]; } && printf '%s\0' "$NAME-source/$f"
+      done < "$list.raw" > "$list"
+      ln -s "$ROOT" "$SRC/$NAME-source"   # lets zip store every path under the wrapper folder
+      rm -f "$PKG/$NAME-source.zip"
+      (cd "$SRC" && zip -qy "$PKG/$NAME-source.zip" -@ < <(tr '\0' '\n' < "$list"))
+      rm -rf "$SRC"
       ;;
     *) echo "Unknown platform: $p" >&2; exit 1 ;;
   esac
