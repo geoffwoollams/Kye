@@ -40,9 +40,6 @@ public class Pulse : MonoBehaviour
                 transform.localScale = new Vector3(scale, scale, scale);
         }
 
-        //var scale = Mathf.SmoothStep(1f, 1.1f, scaleT);
-        //transform.localScale = new Vector3(scale, scale, scale);
-
         _elapsedTime += (Time.unscaledDeltaTime * Speed);
     }
 }

@@ -95,6 +95,9 @@ There is no fixed timestep. Every component times itself against `Time.time`: `G
 - Entry points on `GameController`: `LoadLevelWithNoR(name)`, `LoadLevelWithString(raw)`, `LoadLevelWithB64(b64)`, `LoadLevelWithKyeFile(path)`. All of them reach `LoadLevel(b64)` → `EraseLevel()` → `InsertLevel()`.
 - `InsertLevel` instantiates prefabs into `ItemContainer`. If the level has no Kye, it adds one at (3, 3). Any non-empty item on the border (x 0 or 29, y 0 or 19) that is not a wall (codes `1`-`9`) becomes `wall5`.
 
+### Dev bot (Editor only)
+`DevBot` (`#if UNITY_EDITOR`, with `DevSolver` as its path finder) plays the current level when you press **B** during a level, and stops on B again, on level complete or failed, on any level load, and on the main menu. It creates itself at startup and feeds Kye's input through a hook in `GameController.ProcessInput`; it never records best times and switches analytics off while it runs. It shows a semi-transparent "Bot Enabled" notice at the bottom centre.
+
 ### Saving and analytics
 - `SaveSystem` writes `settings.v3.json` to `Application.persistentDataPath` and no longer reads the old `settings.v1.dat` / `settings.v2.dat` files (their migration code was removed). If the v3 file is corrupt it is copied to `.corrupt` and defaults are used. `Save` skips the disk write when the settings JSON is unchanged since the last write.
 - WebGL builds force `UnlockAllLevels`.
@@ -102,7 +105,7 @@ There is no fixed timestep. Every component times itself against `Time.time`: `G
 
 ## Platform-specific UI: check `OSAdjustments.cs` for any menu change
 
-`OSAdjustments.cs` (on the main menu in `Game.unity`) changes the menu at runtime. Android and desktop keep the Exit button and instead rewire Settings' `selectOnRight` to Exit (the scene points it at the Editor-only Dev button, which is destroyed outside the Editor). Under `#if UNITY_WEBGL || UNITY_IOS || UNITY_EDITOR`:
+`OSAdjustments.cs` (on the main menu in `Game.unity`) changes the menu at runtime. Android and desktop keep the Exit button and instead rewire Settings' `selectOnRight` to Exit. Under `#if UNITY_WEBGL || UNITY_IOS || UNITY_EDITOR`:
 - it **removes** the Exit button (`SetActive(false)`),
 - it **moves** the Help and Settings buttons 50 px to the right,
 - it **rewires** the Levels button's `selectOnDown` to Settings, for controller and keyboard navigation.

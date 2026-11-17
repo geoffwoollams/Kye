@@ -51,7 +51,6 @@ public class Blackhole : MonoBehaviour
         {
             if(_munches > 0 )
             {
-                //_spriteRenderer.sprite = SpritePool[Common.GetRandom(4, 7)];
                 _spriteRenderer.sprite = SpritePool[8 - _munches];
                 _munches--;
             }

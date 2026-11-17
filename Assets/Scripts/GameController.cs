@@ -520,7 +520,6 @@ public class GameController : MonoBehaviour
     {
 #if UNITY_EDITOR
         DevBot.NotifyMainMenu();
-        DevPanel.Hide();
 #endif
         levelEditor.IsPlaying = false;
         ItemContainer.gameObject.SetActive(true);
@@ -553,9 +552,6 @@ public class GameController : MonoBehaviour
 
     public void HideMainMenu()
     {
-#if UNITY_EDITOR
-        DevPanel.Hide();
-#endif
         GamePanel.SetActive(false);
         PauseMenu.SetActive(false);
         MainMenu.SetActive(false);
@@ -1269,8 +1265,13 @@ public class GameController : MonoBehaviour
             return;
 
         if(MainMenu.activeSelf)
+        {
+            var keyboard = Keyboard.current;
+            if(keyboard != null && keyboard.rKey.wasPressedThisFrame && !MessageContainer.activeSelf)
+                RandomPicker();
             return;
-        
+        }
+
         if(MessageContainer.activeSelf)
             return;
 
@@ -1415,7 +1416,7 @@ public class GameController : MonoBehaviour
 
         bool devBot = false;
 #if UNITY_EDITOR
-        devBot = DevBot.Active; // the Dev bot never records best times
+        devBot = DevBot.Active; // the bot never records best times
 #endif
         if (!levelEditor.IsPlaying && _currentLevelFilePath == "" && !devBot)
         {

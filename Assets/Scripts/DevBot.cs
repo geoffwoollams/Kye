@@ -1,9 +1,14 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
-// Editor-only bot that plays a level by itself (started from the Dev panel). It feeds Kye's input through
+// Editor-only bot that plays the current level by itself. Press B during a level to hand Kye over to it,
+// and B again to take control back. It also switches off when the level is completed or failed, when the
+// level changes, and when you go back to the main menu. It feeds Kye's input through
 // GameController.ProcessInput, so the real game rules run unchanged.
 //
 // How it plays:
@@ -17,9 +22,7 @@ using UnityEngine;
 //    nearest earth, or pushes the nearest block, then waits again to see what that freed up.
 //  - If it has been stuck for a while but the start point could still reach a diamond, it walks into a
 //    monster on purpose: dying sends Kye back to the start.
-//  - If it is really stuck, runs out of lives, or makes no progress for a long time, it restarts the level
-//    (with different random choices) and keeps trying until the level is completed.
-// Completed runs never submit a best time, and analytics are switched off while it runs.
+// Runs under the bot never submit a best time, and analytics are switched off while it runs.
 public class DevBot : MonoBehaviour
 {
     public static DevBot Instance { get; private set; }
@@ -28,22 +31,13 @@ public class DevBot : MonoBehaviour
     public float StepDelay = 0.15f;           // seconds between Kye's moves (slower than a person holding a key)
     public float ExploreAfter = 3f;           // stuck this long: dig earth / push blocks to see what changes
     public float IdleBeforeDying = 8f;        // stuck this long: consider dying on purpose
-    public float IdleBeforeRestart = 30f;     // stuck this long: restart the level
-    public float NoProgressRestart = 120f;    // no diamond collected for this long: restart the level
-
-    private enum Pending { None, Restart, ReturnToPanel }
 
     private bool _running;
-    private bool _loadingSelf;
-    private Pending _pending;
-    private string _level = "";
-    private string _savedLastLevel;
     private bool _savedAnalytics;
+    private GUIStyle _noticeStyle;
 
-    private int _attempt;
-    private float _runStart, _lastProgress, _nextAct, _idleSince, _nextDeep, _nextDyingCheck, _doneAt;
+    private float _nextAct, _idleSince, _nextDeep, _nextDyingCheck;
     private int _lastDiamonds;
-    private string _status = "";
     private System.Random _rng;
 
     private readonly DevSolver _solver = new DevSolver();
@@ -55,6 +49,14 @@ public class DevBot : MonoBehaviour
 
     private int _lastDir, _lastPos, _expectPos, _failKey, _failCount;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Create()
+    {
+        var go = new GameObject("DevBot");
+        DontDestroyOnLoad(go);
+        go.AddComponent<DevBot>();
+    }
+
     void Awake()
     {
         Instance = this;
@@ -62,30 +64,16 @@ public class DevBot : MonoBehaviour
 
     // ---- Starting and stopping -------------------------------------------------------------------------
 
-    public void StartLevel(string levelName)
+    private void StartBot()
     {
-        Stop("restarted");
-
-        var gc = GameController.Instance;
-        var settings = AppController.Instance.settings;
-
-        _level = levelName;
-        _savedLastLevel = settings.LastLevelPlayed;
         _savedAnalytics = KyeAnalytics.enabled;
         KyeAnalytics.enabled = false;
 
         _running = true;
-        _attempt = 1;
-        _runStart = Time.unscaledTime;
-        _pending = Pending.None;
-        _doneAt = -1f;
-
-        _loadingSelf = true;
-        gc.LoadLevelWithNoR(levelName);
-        _loadingSelf = false;
-
-        ResetAttempt();
-        Debug.Log("[DevBot] Started " + levelName);
+        _nextAct = 0f;
+        _rng = new System.Random();
+        ResetState();
+        Debug.Log("[DevBot] Enabled");
     }
 
     public void Stop(string reason)
@@ -94,17 +82,14 @@ public class DevBot : MonoBehaviour
             return;
 
         _running = false;
-
-        AppController.Instance.settings.LastLevelPlayed = _savedLastLevel;
         KyeAnalytics.enabled = _savedAnalytics;
-
-        Debug.Log("[DevBot] Stopped " + _level + (reason != null ? " (" + reason + ")" : ""));
+        Debug.Log("[DevBot] Disabled (" + reason + ")");
     }
 
     // Called by GameController so the bot stops when something else takes over.
     public static void NotifyLevelLoading()
     {
-        if (Instance != null && Instance._running && !Instance._loadingSelf)
+        if (Instance != null)
             Instance.Stop("level changed");
     }
 
@@ -114,9 +99,8 @@ public class DevBot : MonoBehaviour
             Instance.Stop("main menu");
     }
 
-    private void ResetAttempt()
+    private void ResetState()
     {
-        _rng = new System.Random(_attempt * 7919 + _level.GetHashCode());
         _plan = null;
         _planIdx = 0;
         _lastDir = -1;
@@ -128,62 +112,69 @@ public class DevBot : MonoBehaviour
         _waitUntil = 0f;
         _exploreCount = 0;
         _lastDiamonds = int.MaxValue;
-        _lastProgress = Time.unscaledTime;
         _solver.ClearBans();
     }
 
-    // ---- Supervising (restarts, completion) ------------------------------------------------------------
+    // ---- The B key and the notice ----------------------------------------------------------------------
 
     void Update()
+    {
+        var gc = GameController.Instance;
+        if (gc == null)
+            return;
+
+        if (_running && (gc.LevelComplete.activeSelf || gc.LevelFailed.activeSelf))
+        {
+            Stop(gc.LevelComplete.activeSelf ? "level complete" : "level failed");
+            return;
+        }
+
+        var kb = Keyboard.current;
+        if (kb == null || !kb.bKey.wasPressedThisFrame || TypingInTextBox())
+            return;
+
+        if (_running)
+            Stop("B pressed");
+        else if (CanStart(gc))
+            StartBot();
+    }
+
+    private static bool CanStart(GameController gc)
+    {
+        return gc.Kye != null && gc.GamePanel.activeSelf && !gc.MainMenu.activeSelf && !gc.levelEditor.IsEditing &&
+               !gc.PauseMenu.activeSelf && !gc.MessageContainer.activeSelf &&
+               !gc.LevelComplete.activeSelf && !gc.LevelFailed.activeSelf;
+    }
+
+    private static bool TypingInTextBox()
+    {
+        var es = EventSystem.current;
+        if (es == null || es.currentSelectedGameObject == null)
+            return false;
+        var input = es.currentSelectedGameObject.GetComponent<TMP_InputField>();
+        return input != null && input.isFocused;
+    }
+
+    void OnGUI()
     {
         if (!_running)
             return;
 
-        var gc = GameController.Instance;
-        float now = Time.unscaledTime;
-
-        if (gc.LevelComplete.activeSelf)
+        if (_noticeStyle == null)
         {
-            if (_doneAt < 0f)
+            _noticeStyle = new GUIStyle(GUI.skin.box)
             {
-                _doneAt = now;
-                Debug.Log("[DevBot] Completed " + _level + " on try " + _attempt + " after " + (now - _runStart).ToString("0.0") + "s");
-            }
-            else if (now - _doneAt > 2f)
-            {
-                ReturnToPanel();
-            }
-            return;
+                fontSize = 22,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+            };
+            _noticeStyle.normal.textColor = Color.white;
         }
 
-        if (_pending == Pending.ReturnToPanel)
-        {
-            ReturnToPanel();
-            return;
-        }
-
-        if (gc.LevelFailed.activeSelf || _pending == Pending.Restart || now - _lastProgress > NoProgressRestart)
-            Restart();
-    }
-
-    private void Restart()
-    {
-        _attempt++;
-        _pending = Pending.None;
-
-        _loadingSelf = true;
-        GameController.Instance.RestartLevel();
-        _loadingSelf = false;
-
-        ResetAttempt();
-        Debug.Log("[DevBot] Restarting " + _level + ", try " + _attempt);
-    }
-
-    private void ReturnToPanel()
-    {
-        Stop(null);
-        GameController.Instance.ShowMainMenu();
-        DevPanel.Instance.ShowPanel();
+        var old = GUI.color;
+        GUI.color = new Color(1f, 1f, 1f, 0.5f);
+        GUI.Box(new Rect((Screen.width - 220f) / 2f, Screen.height - 70f, 220f, 40f), "Bot Enabled", _noticeStyle);
+        GUI.color = old;
     }
 
     // ---- Playing ---------------------------------------------------------------------------------------
@@ -231,7 +222,6 @@ public class DevBot : MonoBehaviour
         {
             if (_lastDiamonds != int.MaxValue && diamonds < _lastDiamonds)
             {
-                _lastProgress = now;
                 _solver.ClearBans();
                 _idleSince = -1f;
             }
@@ -240,13 +230,7 @@ public class DevBot : MonoBehaviour
 
         if (diamonds == 0)
         {
-            // Either the level is about to finish, or it never had any diamonds and can't be completed.
-            if (_attempt == 1 && now - _runStart > 3f)
-            {
-                Debug.Log("[DevBot] " + _level + " has no diamonds, nothing to do.");
-                _pending = Pending.ReturnToPanel;
-            }
-            return Vector2.zero;
+            return Vector2.zero; // the level is about to finish (or has nothing to collect)
         }
 
         // Keep the plan only while its next step is still possible.
@@ -279,14 +263,6 @@ public class DevBot : MonoBehaviour
 
         List<int> plan = null;
 
-        // On retries sometimes go for a random diamond first, so a retry doesn't repeat the same mistakes.
-        if (_attempt > 1 && _rng.NextDouble() < 0.3)
-        {
-            int target = RandomDiamond();
-            if (target >= 0)
-                plan = FindLeastDisturbing(40000, target);
-        }
-
         // Direct path to the nearest diamond, changing as little as possible (see FindLeastDisturbing).
         if (plan == null)
             plan = FindLeastDisturbing(40000, -1);
@@ -302,7 +278,6 @@ public class DevBot : MonoBehaviour
         {
             _plan = plan;
             _idleSince = -1f;
-            _status = "following a path (" + plan.Count + " moves)";
             return;
         }
 
@@ -310,7 +285,6 @@ public class DevBot : MonoBehaviour
         if (_idleSince < 0f)
             _idleSince = now;
         idle = now - _idleSince;
-        _status = "waiting (" + idle.ToString("0") + "s)";
 
         ComputeRays(gc);
 
@@ -322,7 +296,6 @@ public class DevBot : MonoBehaviour
             {
                 _plan = clear;
                 _planGoal = DevSolver.Goal.Clear;
-                _status = "stepping out of the way";
                 return;
             }
         }
@@ -347,7 +320,6 @@ public class DevBot : MonoBehaviour
                 _plan = explore;
                 _planGoal = goal;
                 _waitUntil = now + 2f + explore.Count * StepDelay;
-                _status = goal == DevSolver.Goal.Earth ? "digging earth" : "pushing a block";
                 return;
             }
         }
@@ -362,14 +334,11 @@ public class DevBot : MonoBehaviour
                 {
                     _plan = hazard;
                     _planGoal = DevSolver.Goal.Hazard;
-                    _status = "dying on purpose to get back to the start";
                     return;
                 }
             }
         }
 
-        if (idle >= IdleBeforeRestart)
-            _pending = Pending.Restart;
     }
 
     // Shortest path to a diamond that disturbs the level as little as possible. Each step is only tried
@@ -450,18 +419,6 @@ public class DevBot : MonoBehaviour
                 }
             }
         }
-    }
-
-    private int RandomDiamond()
-    {
-        int count = 0, pick = -1;
-        for (int i = 0; i < _solver.Cells.Length; i++)
-        {
-            if (_solver.Cells[i] != DevSolver.Diamond) continue;
-            count++;
-            if (_rng.Next(count) == 0) pick = i; // reservoir sampling
-        }
-        return pick;
     }
 
     // ---- Reading the live grid -------------------------------------------------------------------------
