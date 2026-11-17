@@ -169,8 +169,8 @@ crashlytics-build.properties
 /Assets/Layer Lab.meta
 /Assets/TextMesh Pro.old/
 /Assets/TextMesh Pro.old.meta
-/Assets/Plugins/SimpleFileBrowser/
-/Assets/Plugins/SimpleFileBrowser.meta
+/Assets/Sounds/*.mp3
+/Assets/Sounds/*.mp3.meta
 /Assets/_Recovery/
 /Assets/_Recovery.meta
 

@@ -21,7 +21,7 @@ Assets/
   Sprites/ Materials/ Models/ Sounds/ Fonts/   Game assets
   Settings/Build Profiles/   Unity build profiles
   URP*, URPDefaultResources/, UniversalRenderPipelineGlobalSettings.asset   Render pipeline config
-  _Recovery/          Unity scene-recovery output, not real content
+  _Recovery/          Unity scene-recovery output, not real content (gitignored)
 Export/<version>/     Build output (gitignored): <Platform>/ builds, logs/ and Packages/ (the release packages)
 Stuff/                Non-Unity code: release tooling, not part of the game
   Launcher/           Kye auto-updater (C#, net48) and the NSIS script for Kye-Setup.exe
@@ -36,7 +36,7 @@ build.sh              Builds and packages every platform (see Building)
 
 Packages land in `Export/<version>/Packages/`, named from the version (`Kye-3.1.0014a` here): `.tar.gz` (Linux), `.AppImage`, `.zip` (Windows), `-macOS.zip` (contains `Kye.app`), `-web.zip` (the WebGL build files at the zip root), `-source.zip` (source code and build tools, see below), `.apk`, `kye-portmaster.zip` (PortMaster), plus `Kye-Setup.exe`. The unzipped Web build also stays in `Export/<version>/Web/`. Unity's `*_BackUpThisFolder_ButDontShipItWithYourGame` and `*_BurstDebugInformation_DoNotShip` folders are left out of every package.
 
-- **Source zip**: `Kye-<version>-source.zip`, everything under a `Kye-<version>-source/` folder. The file list is git's (`git ls-files --cached --others --exclude-standard`), so it follows `.gitignore` and includes uncommitted and untracked files, and skips files deleted in the working tree. It also leaves out `Export/`, `Stuff/appimage/AppDir/usr/bin/`, `appimagetool-x86_64.AppImage`, `Stuff/Launcher/nsis/app/`, every `*.apk`, and PortMaster's `gamedata/lib/` (except `libc++_shared.so`, added back although `.gitignore`d) and `gamedata/assets/`. The third-party folders and the `unityloader` binary are kept. Changing the exclusions means editing the `source)` case in `build.sh`.
+- **Source zip**: `Kye-<version>-source.zip`, everything under a `Kye-<version>-source/` folder. The file list is git's (`git ls-files --cached --others --exclude-standard`), so it follows `.gitignore` and includes uncommitted and untracked files, and skips files deleted in the working tree. It also leaves out `Export/`, `Stuff/appimage/AppDir/usr/bin/`, `appimagetool-x86_64.AppImage`, `Stuff/Launcher/nsis/app/`, every `*.apk`, and PortMaster's `gamedata/lib/` (except `libc++_shared.so`, added back although `.gitignore`d) and `gamedata/assets/`. The `unityloader` binary is kept. Gitignored third-party folders (below) are left out of the zip, so a built source zip needs them added back (see README.md). Windows packaging also stamps `InstalledVersion` in `Stuff/Launcher/nsis/settings.ini` with the build version (trailing letters dropped), so that file shows as modified after a Windows build. Changing the exclusions means editing the `source)` case in `build.sh`.
 - **Windows**: the zip has the game files at its root (the Launcher extracts it straight into its `app` folder). `Stuff/Launcher/nsis/app` is emptied and replaced with the Windows build, then `Stuff/Launcher/build.sh` produces `Kye-Setup.exe`.
 - **Linux AppImage**: `Stuff/appimage/AppDir/usr/bin` is emptied and replaced with the Linux build, then `ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir Kye-<version>.AppImage`.
 - **Android**: builds an `.apk`, not an `.aab`.
@@ -44,11 +44,14 @@ Packages land in `Export/<version>/Packages/`, named from the version (`Kye-3.1.
 
 ## Third-party folders: never read or edit
 
-- `Assets/Plugins/SimpleFileBrowser/`: the file browser (used for open/save of `.kye` files)
-- `Assets/Layer Lab/`: imported GUI image packs
-- `Assets/TextMesh Pro.old/`: old imported TextMesh Pro package
+- `Assets/Plugins/SimpleFileBrowser/`: the file browser (used for open/save of `.kye` files). MIT licensed, so it **is** committed.
+- `Assets/UI/Sprites/`: Layer Lab UI sprites (Asset Store EULA). **Gitignored**, present locally only.
+- `Assets/Layer Lab/`: imported GUI image packs. Gitignored.
+- `Assets/TextMesh Pro.old/`: old imported TextMesh Pro package, still referenced by the scene (fonts, shaders). Gitignored.
 
-Don't read, search or edit these. Leave them out of greps (for example `grep -r ... Assets/Scripts`). Also skip generated folders: `Library/`, `Temp/`, `obj/`, `Logs/`, `UserSettings/`, `Export/`, `build/`, and the generated `*.csproj` / `*.sln`.
+`Assets/Sounds/*.mp3` (and their `.meta` files) are gitignored too (licence unconfirmed), so they exist only locally. The README's "Missing third-party assets" section says what a fresh clone must replace. **Never `git add -f` the gitignored items, and keep that README section and `THIRD_PARTY_NOTICES.md` in step when assets are added, replaced or ignored.** The licences also matter when adding any new third-party asset: ignore it unless it may be redistributed.
+
+Don't read, search or edit the folders above. Leave them out of greps (for example `grep -r ... Assets/Scripts`). Also skip generated folders: `Library/`, `Temp/`, `obj/`, `Logs/`, `UserSettings/`, `Export/`, `build/`, and the generated `*.csproj` / `*.sln`.
 
 ## Architecture
 

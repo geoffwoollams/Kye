@@ -11,6 +11,10 @@ Used by these TextMesh Pro font assets:
 - `Assets/UI/Fonts/Quicksand-Bold SDF.asset`
 - `Assets/UI/Fonts/Quicksand-SemiBold SDF.asset`
 
+### SimpleFileBrowser (MIT)
+
+`Assets/Plugins/SimpleFileBrowser/` is SimpleFileBrowser by Yasir Kula, used under the MIT licence. Copyright (c) Yasir Kula. Source and the full licence text: https://github.com/yasirkula/UnitySimpleFileBrowser. Its file-type icons have their own licence in `Assets/Plugins/SimpleFileBrowser/Sprites/FileIcons/LICENSE.txt`.
+
 ### Dreamfonts
 
 `Assets/Fonts/dfdrsp*` are Dreamfonts fonts, used under the licence in `Assets/Fonts/license-dreamfonts.txt`.
@@ -21,7 +25,7 @@ These are used by the game but are listed in `.gitignore`. See "Missing third-pa
 
 - **Layer Lab "GUI Pro - Simple Casual"** (Unity Asset Store), used under the Unity Asset Store EULA. UI sprites in `Assets/UI/Sprites/`. Asset guide: https://tinyurl.com/LayerLabAssetGuide
 - **TextMesh Pro resources** (`Assets/TextMesh Pro.old/`), from Unity's TextMesh Pro package, including example fonts.
-- **SimpleFileBrowser** by Yasir Kula (`Assets/Plugins/SimpleFileBrowser/`), https://github.com/yasirkula/UnitySimpleFileBrowser.
+- **Sound effects and music** (`Assets/Sounds/*.mp3`), ignored because their licences are unconfirmed.
 
 ## Packaging tools
 
