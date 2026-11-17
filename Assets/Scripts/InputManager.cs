@@ -10,9 +10,7 @@ public class InputManager : MonoBehaviour
     public bool IncludeWSAD = true;
     public bool IncludeKeyboardArrows = true;
     public bool IncludeNumeric = true;
-    // Kye can't move diagonally, so numpad 7/9/1/3 would just act as left/right.
-    // Leave this off. (If the scene already has it ticked, untick it in the Inspector:
-    // the serialized value overrides this default.)
+    // Kye can't move diagonally, so numpad 7/9/1/3 would just act as left/right. Leave this off.
     public bool IncludeNumericDiagonal = false;
     public bool IncludeJoystick = true;
     public bool IncludeDpad = true;
@@ -30,15 +28,13 @@ public class InputManager : MonoBehaviour
     [HideInInspector]
     public float x, y;
 
-    // NOTE: AnyKeyChange is true for presses AND releases. Don't use it to decide
-    // whether a new step is allowed (that was the cause of the double-step bug).
+    // AnyKeyChange is true for presses AND releases, so don't use it to decide whether a new step is allowed.
     [HideInInspector]
     public bool AnyKey, AnyKeyUp, AnyKeyDown, AnyKeyChange;
 
     [HideInInspector]
     public bool SwipedUp, SwipedDown, SwipedLeft, SwipedRight;
 
-    // Renamed from "Key": it clashed with UnityEngine.InputSystem.Key.
     public class DirectionKey
     {
         public bool isPressed;
@@ -108,7 +104,6 @@ public class InputManager : MonoBehaviour
         HasTouchInput = false;
     }
 
-    // HasMouseInput was never set before.
     private void GetMouseInput()
     {
         Mouse mouse = Mouse.current;
@@ -124,8 +119,6 @@ public class InputManager : MonoBehaviour
         if (screen == null)
             return;
 
-        // The old check (touches.Count > 0) was always true: Count is the number of
-        // touch SLOTS (10), not the number of fingers down.
         TouchControl touch = screen.primaryTouch;
         bool began = touch.press.wasPressedThisFrame;
         bool ended = touch.press.wasReleasedThisFrame;
@@ -177,8 +170,7 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    // "ref" was unnecessary (DirectionKey is a class). Returns whether the button is
-    // active so callers can work out which device is being used.
+    // Returns whether the button is active so callers can work out which device is being used.
     private bool Poll(DirectionKey key, ButtonControl button)
     {
         if (button.isPressed)
@@ -270,7 +262,6 @@ public class InputManager : MonoBehaviour
                 used |= Poll(Right, pad.rightStick.right);
             }
 
-            // HasControllerInput was never set before.
             if (used) HasControllerInput = true;
         }
 

@@ -160,3 +160,20 @@ crashlytics-build.properties
 /.idea/
 /.vscode/
 /.junie/
+
+# Third-party assets that cannot be redistributed. They stay on disk for local builds but are never
+# committed. See "Missing third-party assets" in README.md for what to put back.
+/Assets/UI/Sprites/
+/Assets/UI/Sprites.meta
+/Assets/Layer Lab/
+/Assets/Layer Lab.meta
+/Assets/TextMesh Pro.old/
+/Assets/TextMesh Pro.old.meta
+/Assets/Plugins/SimpleFileBrowser/
+/Assets/Plugins/SimpleFileBrowser.meta
+/Assets/_Recovery/
+/Assets/_Recovery.meta
+
+# Generated Burst output and the prebuilt launcher zip
+/Data/
+/Stuff/Launcher/nsis/launcher-*.zip

@@ -100,6 +100,9 @@ for p in "${PLATFORMS[@]}"; do
       APP=$ROOT/Stuff/Launcher/nsis/app
       rm -rf "$APP"; mkdir -p "$APP"; cp -a "$clean/." "$APP/"
       rm -rf "$clean"
+      # The installer's settings.ini must name the version being installed (the Launcher compares it with the
+      # update manifest). It uses major.minor.build, so drop any trailing letter such as the "a" in 3.1.0014a.
+      sed -i "s/^InstalledVersion=.*/InstalledVersion=${VERSION%%[!0-9.]*}/" "$ROOT/Stuff/Launcher/nsis/settings.ini"
       (cd "$ROOT/Stuff/Launcher" && ./build.sh)
       cp "$ROOT/Stuff/Launcher/nsis/Kye-Setup.exe" "$PKG/"
       ;;

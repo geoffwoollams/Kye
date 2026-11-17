@@ -11,7 +11,7 @@ public class LevelRecord
 {
     public string LevelName;
     public float BestTime;      // seconds; 0 or less = never completed
-    public int Deaths;          // optional extras, remove if not needed
+    public int Deaths;
     public int TimesCompleted;
 
     public LevelRecord(string levelName, float bestTime = 0f)
@@ -28,7 +28,7 @@ public class LevelRecord
 [Serializable]
 public class SettingsV3
 {
-    // Bump this whenever you change the layout, so old saves can be migrated.
+    // Bump this whenever the saved layout changes.
     public const int CurrentVersion = 3;
     public int Version = CurrentVersion;
 
@@ -77,7 +77,7 @@ public class SettingsV3
         UnlimitedLives = false;
     }
 
-    // Kept so your existing call sites still compile.
+    // Convenience constructor: defaults, then the given values.
     public SettingsV3(string lastLevelPlayed, int screenWidth, int screenHeight, bool isFullScreen,
                       string unlockedLevel, bool unlockAllLevels, bool godMode, bool unlimitedLives)
         : this()
